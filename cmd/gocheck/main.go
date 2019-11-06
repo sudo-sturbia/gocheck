@@ -1,12 +1,14 @@
 package main
 
 import (
-    "fmt"
-    "os"
     "bufio"
-    "flag"
     "errors"
+    "flag"
+    "fmt"
     "log"
+    "os"
+    "strings"
+    "unicode"
 )
 
 const SIZE_OF_ALPHABET = 26
@@ -28,7 +30,8 @@ func main() {
         log.Fatal(dictionaryPathError)
     }
 
-    loadDictionary(*dictionaryPath)
+    dictionary := loadDictionary(*dictionaryPath)
+    checkFile(dictionary, *filePath)
 }
 
 /*
@@ -61,7 +64,9 @@ func loadDictionary(path string) *Node {
         root = loadWord(root, word, 0)
     }
 
-    fmt.Println(root.children)
+    if err := fileScanner.Err(); err != nil {
+        log.Fatal(err)
+    }
 
     return root
 }
@@ -81,4 +86,60 @@ func loadWord(root *Node, word string, charNumber int) *Node {
 
     root.children[word[charNumber] - FIRST_ASCII_CHAR] = loadWord(root.children[word[charNumber] - FIRST_ASCII_CHAR], word, charNumber + 1)
     return root
+}
+
+/*
+ * Verifying file
+ */
+
+// Check file for spelling errors
+func checkFile(root *Node, path string) {
+    // Open file
+    file, err := os.Open(path)
+
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer file.Close()
+
+    wordEnd := func(c rune) bool {
+        return unicode.IsPunct(c) || (c == ' ')
+    }
+
+    // Read words from file
+    lineNumber := 0
+
+    fileScanner := bufio.NewScanner(file)
+    for fileScanner.Scan() {
+        textLine := fileScanner.Text()
+
+        words := strings.FieldsFunc(textLine, wordEnd)
+
+        for i := 0; i < len(words); i++ {
+            if !checkWord(root, strings.ToLower(words[i]), 0) {
+                // Print spelling error
+                fmt.Printf("Error at (line: %d, word: %d)  \"%s\" incorrect.\n", lineNumber, i, words[i])
+            }
+        }
+
+        lineNumber++
+    }
+
+    if err := fileScanner.Err(); err != nil {
+        log.Fatal(err)
+    }
+}
+
+// Check if a word exists in the dictionary
+func checkWord(root *Node, word string, charNumber int) bool {
+    // If end of word
+    if charNumber == len(word) {
+        return root.isWord
+    }
+
+    if root.children[word[charNumber] - FIRST_ASCII_CHAR] != nil {
+        return checkWord(root.children[word[charNumber] - FIRST_ASCII_CHAR], word, charNumber + 1)
+    } else {
+        return false
+    }
 }
