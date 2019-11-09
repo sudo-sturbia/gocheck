@@ -11,32 +11,35 @@ import (
     "unicode"
 )
 
-const SIZE_OF_ALPHABET = 26
-const FIRST_ASCII_CHAR = 97
+var ignoreUppercase bool
 
 func main() {
-    // Process command line arguments
-    filePath := flag.String("f", "", "Path to the file that should be processed.")
-    dictionaryPath := flag.String("d", "", "Path to dictionary used in processing.")
-
-    filePathError := errors.New("option -f empty, no file specified.")
-    dictionaryPathError := errors.New("option -d empty, no dictionary file specified.")
+    // Process command line flags
+    filePathFlag := flag.String("f", "", "Path to the file that should be processed.")
+    dictionaryPathFlag := flag.String("d", "", "Path to dictionary used in processing.")
+    uppercaseFlag := flag.Bool("u", false, "Ignore uppercase letters. By default a word that contains an uppercase letter any where but the start is considered wrong," +
+                                           "when this flag is used uppercase and lowercase letters are treated similarly.")
 
     flag.Parse()
 
-    if len(*filePath) == 0 {
-        log.Fatal(filePathError)
-    } else if len(*dictionaryPath) == 0 {
-        log.Fatal(dictionaryPathError)
+    // If no path is specified
+    if len(*filePathFlag) == 0 {
+        log.Fatal(errors.New("option -f empty, no file specified."))
+    } else if len(*dictionaryPathFlag) == 0 {
+        log.Fatal(errors.New("option -d empty, no dictionary file specified."))
     }
 
-    dictionary := loadDictionary(*dictionaryPath)
-    checkFile(dictionary, *filePath)
+    ignoreUppercase = *uppercaseFlag
+
+    dictionary := loadDictionary(*dictionaryPathFlag)
+    checkFile(dictionary, *filePathFlag)
 }
 
 /*
  * Loading a dictionary
  */
+
+const SIZE_OF_ALPHABET = 26
 
 // A trie node
 type Node struct {
@@ -80,11 +83,11 @@ func loadWord(root *Node, word string, charNumber int) *Node {
     }
 
     // If Node is not initialized
-    if root.children[word[charNumber] - FIRST_ASCII_CHAR] == nil {
-        root.children[word[charNumber] - FIRST_ASCII_CHAR] = new(Node)
+    if root.children[word[charNumber] - 'a'] == nil {
+        root.children[word[charNumber] - 'a'] = new(Node)
     }
 
-    root.children[word[charNumber] - FIRST_ASCII_CHAR] = loadWord(root.children[word[charNumber] - FIRST_ASCII_CHAR], word, charNumber + 1)
+    root.children[word[charNumber] - 'a'] = loadWord(root.children[word[charNumber] - 'a'], word, charNumber + 1)
     return root
 }
 
@@ -116,7 +119,12 @@ func checkFile(root *Node, path string) {
         words := strings.FieldsFunc(textLine, wordEnd)
 
         for i := 0; i < len(words); i++ {
-            if !checkWord(root, strings.ToLower(words[i]), 0) {
+            // Ignore case if flag is used
+            if ignoreUppercase {
+                words[i] = strings.ToLower(words[i])
+            }
+
+            if !checkWord(root, words[i], 0) {
                 // Print spelling error
                 fmt.Printf("Error at (line: %d, word: %d)  \"%s\" incorrect.\n", lineNumber, i, words[i])
             }
@@ -132,13 +140,30 @@ func checkFile(root *Node, path string) {
 
 // Check if a word exists in the dictionary
 func checkWord(root *Node, word string, charNumber int) bool {
-    // If end of word
+
     if charNumber == len(word) {
         return root.isWord
     }
 
-    if root.children[word[charNumber] - FIRST_ASCII_CHAR] != nil {
-        return checkWord(root.children[word[charNumber] - FIRST_ASCII_CHAR], word, charNumber + 1)
+    // Check type of character
+    if unicode.IsLetter(rune(word[charNumber])) {
+
+        if unicode.IsUpper(rune(word[charNumber])) {
+            if charNumber == 0 {
+                if root.children[byte(unicode.ToLower(rune(word[charNumber]))) - 'a'] != nil {
+                    return checkWord(root.children[byte(unicode.ToLower(rune(word[charNumber]))) - 'a'], word, charNumber + 1)
+                }
+            }
+
+            return false
+        } else {
+            // Check if character exists
+            if root.children[word[charNumber] - 'a'] != nil {
+                return checkWord(root.children[word[charNumber] - 'a'], word, charNumber + 1)
+            }
+
+            return false
+        }
     } else {
         return false
     }
