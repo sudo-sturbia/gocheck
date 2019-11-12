@@ -11,6 +11,7 @@ import (
     "unicode"
 )
 
+var spellingErrors []string
 var ignoreUppercase bool
 
 func main() {
@@ -33,6 +34,8 @@ func main() {
 
     dictionary := loadDictionary(*dictionaryPathFlag)
     checkFile(dictionary, *filePathFlag)
+
+    printSpellingErrors()
 }
 
 /*
@@ -95,8 +98,6 @@ func loadWord(root *Node, word string, charNumber int) *Node {
  * Verifying file
  */
 
- var spellingErrors []string
-
 // Check file for spelling errors
 func checkFile(root *Node, path string) {
     spellingErrors = make([]string, 0)
@@ -127,8 +128,6 @@ func checkFile(root *Node, path string) {
     if err := fileScanner.Err(); err != nil {
         log.Fatal(err)
     }
-
-    printSpellingErrors()
 }
 
 // Find spelling errors in a line
