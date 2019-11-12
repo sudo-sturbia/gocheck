@@ -17,7 +17,7 @@ func main() {
     // Process command line flags
     filePathFlag := flag.String("f", "", "Path to the file that should be processed.")
     dictionaryPathFlag := flag.String("d", "", "Path to dictionary used in processing.")
-    uppercaseFlag := flag.Bool("u", false, "Ignore uppercase letters. By default a word that contains an uppercase letter any where but the start is considered wrong," +
+    uppercaseFlag := flag.Bool("u", false, "Ignore uppercase letters. By default a word that contains an uppercase letter any where but the start is considered wrong, " +
                                            "when this flag is used uppercase and lowercase letters are treated similarly.")
 
     flag.Parse()
@@ -95,8 +95,12 @@ func loadWord(root *Node, word string, charNumber int) *Node {
  * Verifying file
  */
 
+ var spellingErrors []string
+
 // Check file for spelling errors
 func checkFile(root *Node, path string) {
+    spellingErrors = make([]string, 0)
+
     // Open file
     file, err := os.Open(path)
 
@@ -116,25 +120,31 @@ func checkFile(root *Node, path string) {
     for fileScanner.Scan() {
         textLine := fileScanner.Text()
 
-        words := strings.FieldsFunc(textLine, wordEnd)
-
-        for i := 0; i < len(words); i++ {
-            // Ignore case if flag is used
-            if ignoreUppercase {
-                words[i] = strings.ToLower(words[i])
-            }
-
-            if !checkWord(root, words[i], 0) {
-                // Print spelling error
-                fmt.Printf("Error at (line: %d, word: %d)  \"%s\" incorrect.\n", lineNumber, i, words[i])
-            }
-        }
-
+        checkLine(root, textLine, lineNumber, wordEnd)
         lineNumber++
     }
 
     if err := fileScanner.Err(); err != nil {
         log.Fatal(err)
+    }
+
+    printSpellingErrors()
+}
+
+// Find spelling errors in a line
+func checkLine(root *Node, textLine string, lineNumber int, wordEnd func (c rune) bool) {
+    words := strings.FieldsFunc(textLine, wordEnd)
+
+    for i := 0; i < len(words); i++ {
+        // Ignore case if flag is used
+        if ignoreUppercase {
+            words[i] = strings.ToLower(words[i])
+        }
+
+        if !checkWord(root, words[i], 0) {
+            // Add spelling error to list
+            spellingErrors = append(spellingErrors, fmt.Sprintf("At (%d, %d)  \"%s\"", lineNumber, i, words[i]))
+        }
     }
 }
 
@@ -167,4 +177,15 @@ func checkWord(root *Node, word string, charNumber int) bool {
     } else {
         return false
     }
+}
+
+// Print spelling errors
+func printSpellingErrors() {
+    numberOfErrors := len(spellingErrors)
+
+    for i := 0; i < numberOfErrors; i++ {
+        fmt.Println(spellingErrors[i])
+    }
+
+    fmt.Printf("- Found a total of %d errors.\n", numberOfErrors)
 }
