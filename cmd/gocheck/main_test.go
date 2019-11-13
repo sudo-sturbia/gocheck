@@ -10,12 +10,14 @@ func TestCheckFile(t *testing.T) {
 
     // Test a file with no errors
     checkFile(root, "../../test/paragraph.txt")
+    wg.Wait()
     if len(spellingErrors) != 0 {
         t.Errorf("Number of spelling errors incorrect, expected: 0, got: %d", len(spellingErrors))
     }
 
     // Test a file with eight errors
     checkFile(root, "../../test/paragraph-wrong.txt")
+    wg.Wait()
     if len(spellingErrors) != 8 {
         t.Errorf("Number of spelling errors incorrect, expected: 8, got: %d", len(spellingErrors))
     }

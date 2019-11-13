@@ -8,11 +8,15 @@ import (
     "log"
     "os"
     "strings"
+    "sync"
     "unicode"
 )
 
 var spellingErrors []string
 var ignoreUppercase bool
+
+var mux sync.Mutex
+var wg sync.WaitGroup
 
 func main() {
     // Process command line flags
@@ -35,6 +39,7 @@ func main() {
     dictionary := loadDictionary(*dictionaryPathFlag)
     checkFile(dictionary, *filePathFlag)
 
+    wg.Wait()
     printSpellingErrors()
 }
 
@@ -121,7 +126,9 @@ func checkFile(root *Node, path string) {
     for fileScanner.Scan() {
         textLine := fileScanner.Text()
 
-        checkLine(root, textLine, lineNumber, wordEnd)
+        wg.Add(1)
+        go checkLine(root, textLine, lineNumber, wordEnd)
+
         lineNumber++
     }
 
@@ -132,6 +139,8 @@ func checkFile(root *Node, path string) {
 
 // Find spelling errors in a line
 func checkLine(root *Node, textLine string, lineNumber int, wordEnd func (c rune) bool) {
+    defer wg.Done()
+
     words := strings.FieldsFunc(textLine, wordEnd)
 
     for i := 0; i < len(words); i++ {
@@ -142,7 +151,9 @@ func checkLine(root *Node, textLine string, lineNumber int, wordEnd func (c rune
 
         if !checkWord(root, words[i], 0) {
             // Add spelling error to list
+            mux.Lock()
             spellingErrors = append(spellingErrors, fmt.Sprintf("At (%d, %d)  \"%s\"", lineNumber, i, words[i]))
+            mux.Unlock()
         }
     }
 }
