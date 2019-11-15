@@ -1,23 +1,26 @@
-package main
+// Find spelling errors in a text file and print error messages
+package checker
 
 import (
     "testing"
+
+    "github.com/sudo-sturbia/gocheck/pkg/loader"
 )
 
 // Test check file function on several files
 func TestCheckFile(t *testing.T) {
-    root := loadDictionary("../../test/test_words.txt")
+    root := loader.LoadDictionary("../../test/test_words.txt")
 
     // Test a file with no errors
-    checkFile(root, "../../test/paragraph.txt")
-    wg.Wait()
+    CheckFile(root, "../../test/paragraph.txt")
+    Wg.Wait()
     if len(spellingErrors) != 0 {
         t.Errorf("Number of spelling errors incorrect, expected: 0, got: %d", len(spellingErrors))
     }
 
     // Test a file with eight errors
-    checkFile(root, "../../test/paragraph-wrong.txt")
-    wg.Wait()
+    CheckFile(root, "../../test/paragraph-wrong.txt")
+    Wg.Wait()
     if len(spellingErrors) != 8 {
         t.Errorf("Number of spelling errors incorrect, expected: 8, got: %d", len(spellingErrors))
     }
@@ -44,10 +47,10 @@ func TestCheckFile(t *testing.T) {
 
 // Benchmark word processing
 func BenchmarkCheckFile(b *testing.B) {
-    root := loadDictionary("../../test/test_words.txt")
+    root := loader.LoadDictionary("../../test/test_words.txt")
 
     // Run benchmark
     for n := 0; n < b.N; n++ {
-        checkFile(root, "../../test/paragraph.txt")
+        CheckFile(root, "../../test/paragraph.txt")
     }
 }
