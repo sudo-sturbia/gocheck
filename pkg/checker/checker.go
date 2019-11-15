@@ -59,8 +59,10 @@ func CheckFile(root *loader.Node, path string) {
 func checkLine(root *loader.Node, textLine string, lineNumber int, wordEnd func (c rune) bool) {
     defer Wg.Done()
 
+    spellingErrorsInLine := make([]string, 0)
     words := strings.FieldsFunc(textLine, wordEnd)
 
+    hasErrors := false
     for i := 0; i < len(words); i++ {
         // Ignore case if flag is used
         if IgnoreUppercase {
@@ -69,10 +71,16 @@ func checkLine(root *loader.Node, textLine string, lineNumber int, wordEnd func 
 
         if !checkWord(root, words[i], 0) {
             // Add spelling error to list
-            mux.Lock()
-            spellingErrors = append(spellingErrors, fmt.Sprintf("At (%d, %d)  \"%s\"", lineNumber, i, words[i]))
-            mux.Unlock()
+            spellingErrorsInLine = append(spellingErrorsInLine, fmt.Sprintf("At (%d, %d)  \"%s\"", lineNumber, i, words[i]))
+            hasErrors = true
         }
+    }
+
+    // Add line errors to list
+    if (hasErrors) {
+        mux.Lock()
+        spellingErrors = append(spellingErrors, spellingErrorsInLine...)
+        mux.Unlock()
     }
 }
 

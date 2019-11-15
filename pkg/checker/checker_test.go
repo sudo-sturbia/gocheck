@@ -2,24 +2,35 @@
 package checker
 
 import (
+    "os"
     "testing"
 
     "github.com/sudo-sturbia/gocheck/pkg/loader"
 )
 
-// Test check file function on several files
-func TestCheckFile(t *testing.T) {
-    root := loader.LoadDictionary("../../test/test_words.txt")
+var root *loader.Node
 
-    // Test a file with no errors
+// Setup dictionary before testing
+func TestMain(m *testing.M) {
+    root = loader.LoadDictionary("../../test/test_words.txt")
+    os.Exit(m.Run())
+}
+
+// Test check file function on a file without errors
+func TestCheckFileWithoutErrors(t *testing.T) {
     CheckFile(root, "../../test/paragraph.txt")
+
     Wg.Wait()
     if len(spellingErrors) != 0 {
         t.Errorf("Number of spelling errors incorrect, expected: 0, got: %d", len(spellingErrors))
     }
 
-    // Test a file with eight errors
+}
+
+// Test check file function on a file with errors
+func TestCheckFileWithErrors(t *testing.T) {
     CheckFile(root, "../../test/paragraph-wrong.txt")
+
     Wg.Wait()
     if len(spellingErrors) != 8 {
         t.Errorf("Number of spelling errors incorrect, expected: 8, got: %d", len(spellingErrors))
@@ -43,13 +54,11 @@ func TestCheckFile(t *testing.T) {
             t.Errorf("Found incorrect error: %s", spellingErrors[i])
         }
     }
+
 }
 
-// Benchmark word processing
-func BenchmarkCheckFile(b *testing.B) {
-    root := loader.LoadDictionary("../../test/test_words.txt")
-
-    // Run benchmark
+// Benchmark processing time
+func BenchmarkWordProcessing(b *testing.B) {
     for n := 0; n < b.N; n++ {
         CheckFile(root, "../../test/paragraph.txt")
     }
