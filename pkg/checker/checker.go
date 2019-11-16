@@ -14,6 +14,7 @@ import (
 )
 
 var spellingErrors []string
+var IgnoredWords map[string]bool
 var IgnoreUppercase bool
 
 var mux sync.Mutex
@@ -64,19 +65,20 @@ func checkLine(root *loader.Node, textLine string, lineNumber int, wordEnd func 
 
     hasErrors := false
     for i := 0; i < len(words); i++ {
-        // Ignore case if flag is used
-        if IgnoreUppercase {
-            words[i] = strings.ToLower(words[i])
-        }
+        if !IgnoredWords[words[i]] {
+            if IgnoreUppercase {
+                words[i] = strings.ToLower(words[i])
+            }
 
-        if !checkWord(root, words[i], 0) {
-            // Add spelling error to list
-            spellingErrorsInLine = append(spellingErrorsInLine, fmt.Sprintf("At (%d, %d)  \"%s\"", lineNumber, i, words[i]))
-            hasErrors = true
+            if !checkWord(root, words[i], 0) {
+                // Add spelling error to list
+                spellingErrorsInLine = append(spellingErrorsInLine, fmt.Sprintf("At (%d, %d)  \"%s\"", lineNumber, i, words[i]))
+                hasErrors = true
+            }
         }
     }
 
-    // Add line errors to list
+    // Add line's errors to errors' slice
     if (hasErrors) {
         mux.Lock()
         spellingErrors = append(spellingErrors, spellingErrorsInLine...)

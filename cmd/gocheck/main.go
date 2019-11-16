@@ -10,13 +10,14 @@ import (
     "github.com/sudo-sturbia/gocheck/pkg/checker"
 )
 
+// Initialize program and parse command line flags
 func main() {
     // Process command line flags
     filePathFlag := flag.String("f", "", "path to the file that should be processed.")
-    dictionaryPathFlag := flag.String("d", "", "Path to dictionary used validation.")
+    dictionaryPathFlag := flag.String("d", "", "path to dictionary used validation.")
     uppercaseFlag := flag.Bool("u", false, "ignore uppercase letters. By default a word that contains an uppercase letter any where but the start is considered wrong, " +
                                            "when this flag is used, this feature is disabled.")
-
+    flag.Var(new(ignoreFlag), "i", "ignore specified word (specified word is considered correct.) This flag can be used an unlimited amount of times.")
     flag.Usage = helpFlag
 
     flag.Parse()
@@ -37,6 +38,29 @@ func main() {
     checker.PrintSpellingErrors()
 }
 
+// Create custom ignore flag implementing flag.Value interface
+type ignoreFlag string
+
+// Return string representation
+func (i *ignoreFlag) String() string {
+    var stringRepresentation string
+    for key := range checker.IgnoredWords {
+        stringRepresentation += key
+    }
+
+    return stringRepresentation
+}
+
+// Set flag value
+func (i *ignoreFlag) Set(value string) error {
+    if checker.IgnoredWords == nil {
+        checker.IgnoredWords = make(map[string]bool)
+    }
+
+    checker.IgnoredWords[value] = true
+    return nil
+}
+
 // Create --help flag
 func helpFlag() {
     fmt.Println(
@@ -44,7 +68,7 @@ func helpFlag() {
         "\n" +
         "usage:\n" +
         "\n" +
-        "       gocheck [-h] [-f PATH] [-d PATH] [-u]\n" +
+        "       gocheck [-h] [-f PATH] [-d PATH] [-i WORD] [-u]\n" +
         "\n" +
         "required arguments:\n" +
         "\n" +
@@ -54,6 +78,7 @@ func helpFlag() {
         "optional arguments:\n" +
         "\n" +
         "       -h --help   Print this help message.\n" +
+        "       -i WORD     Ignore WORD (specified word is considered correct.) This flag can be used an unlimited amount of times.\n" +
         "       -u          Ignore uppercase letters.\n" +
         "                   By default a word that contains an uppercase letter any where but the start is considered wrong, when this flag is used, this feature is disabled.\n" +
         "\n" +
