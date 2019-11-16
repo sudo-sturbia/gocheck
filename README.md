@@ -3,15 +3,13 @@
 
 ## How to install
 
-```console
+```
 go get github.com/sudo-sturbia/gocheck/cmd/gocheck
 ```
 
 ## How to use
 
 ```console
-gocheck is a simple, fast spell-checker.
-
 usage:
 
        gocheck [-h] [-f PATH] [-d PATH] [-i WORD] [-u]
@@ -34,10 +32,10 @@ A dictionary can be downloaded from [english-words](https://github.com/dwyl/engl
 
 #### Usage example
 
-Using files in /test directory
+Using files in test/ directory
 
-```console
-gocheck -f test/paragraph-wrong.txt -d test/test_words
+```
+gocheck -f test/paragraph-wrong.txt -d test/test_words.txt
 ```
 
 Output
