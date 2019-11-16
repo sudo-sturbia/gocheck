@@ -74,6 +74,7 @@ func helpFlag() {
         "\n" +
         "       -f PATH     Path to the file that should be processed.\n" +
         "       -d PATH     Path to dictionary used for validation.\n" +
+        "                   A dictionary is a file containing a collection of lowercase words, one word per line.\n" +
         "\n" +
         "optional arguments:\n" +
         "\n" +
