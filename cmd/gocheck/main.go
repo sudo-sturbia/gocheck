@@ -13,26 +13,28 @@ import (
 // Initialize program and parse command line flags
 func main() {
 	// Process command line flags
-	filePathFlag := flag.String("f", "", "path to the file that should be processed.")
-	dictionaryPathFlag := flag.String("d", "", "path to dictionary used validation.")
-	uppercaseFlag := flag.Bool("u", false, "ignore uppercase letters. By default a word that contains an uppercase letter any where but the start is considered wrong, "+
+	uppercaseFlag := flag.Bool("u", false, "ignore uppercase letters. By default a word that contains an uppercase letter any where but the start is considered wrong, \n"+
 		"when this flag is used, this feature is disabled.")
 	flag.Var(new(ignoreFlag), "i", "ignore specified word (specified word is considered correct.) This flag can be used an unlimited amount of times.")
 	flag.Usage = helpFlag
 
 	flag.Parse()
 
+	// Get arguments
+	filePath := flag.Arg(0)
+	dictionaryPath := flag.Arg(1)
+
 	// If no path is specified
-	if len(*filePathFlag) == 0 {
-		log.Fatal(errors.New("option -f empty, no file specified."))
-	} else if len(*dictionaryPathFlag) == 0 {
-		log.Fatal(errors.New("option -d empty, no dictionary file specified."))
+	if filePath == "" {
+		log.Fatal(errors.New("no file specified."))
+	} else if dictionaryPath == "" {
+		log.Fatal(errors.New("no dictionary file specified."))
 	}
 
 	checker.IgnoreUppercase = *uppercaseFlag
 
-	dictionary := loader.LoadDictionary(*dictionaryPathFlag)
-	checker.CheckFile(dictionary, *filePathFlag)
+	dictionary := loader.LoadDictionary(dictionaryPath)
+	checker.CheckFile(dictionary, filePath)
 
 	checker.Wg.Wait()
 	checker.PrintSpellingErrors()
@@ -64,24 +66,23 @@ func (i *ignoreFlag) Set(value string) error {
 // Create --help flag
 func helpFlag() {
 	fmt.Println(
-		"gocheck is a simple, fast spell-checker.\n" +
+		"gocheck is a simple, fast spell-checker. It compares a text file against a list of given words and finds incorrect ones.\n" +
 			"\n" +
 			"usage:\n" +
 			"\n" +
-			"       gocheck [-h] [-f PATH] [-d PATH] [-i WORD] [-u]\n" +
+			"       gocheck [OPTIONS] <FILEPATH> <DICTIONARYPATH>\n" +
 			"\n" +
 			"required arguments:\n" +
 			"\n" +
-			"       -f PATH     Path to the file that should be processed.\n" +
-			"       -d PATH     Path to dictionary used for validation.\n" +
-			"                   A dictionary is a file containing a collection of lowercase words, one word per line.\n" +
+			"       <FILEPATH>        Path to a text file that should be processed to find errors.\n" +
+			"       <DICTIONARYPATH>  Path to a text file containing a list of words, one word per line, to compare the the other file against.\n" +
 			"\n" +
-			"optional arguments:\n" +
+			"options:\n" +
 			"\n" +
-			"       -h --help   Print this help message.\n" +
-			"       -i WORD     Ignore WORD (specified word is considered correct.) This flag can be used an unlimited amount of times.\n" +
-			"       -u          Ignore uppercase letters.\n" +
-			"                   By default a word that contains an uppercase letter any where but the start is considered wrong, when this flag is used, this feature is disabled.\n" +
+			"       -h --help         Print this help message.\n" +
+			"       -i WORD           Ignore specified word (word is considered correct.) This flag can be used an unlimited amount of times.\n" +
+			"       -u                Ignore uppercase letters.\n" +
+			"                         By default a word that contains an uppercase letter any where but the start is considered wrong, when this flag is used, this feature is disabled.\n" +
 			"\n" +
 			"For the source code check the github page [github.com/sudo-sturbia/gocheck]",
 	)
