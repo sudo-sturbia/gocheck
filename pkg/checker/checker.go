@@ -20,7 +20,8 @@ var IgnoreUppercase bool
 var mux sync.Mutex
 var Wg sync.WaitGroup
 
-const SIZE_OF_ALPHABET = 26
+const PRINTABLE_ASCII = 95
+const FIRST_PRINTABLE_ASCII = 32
 
 // Check file for spelling errors
 func CheckFile(root *loader.Node, path string) {
@@ -93,21 +94,23 @@ func checkWord(root *loader.Node, word string, charNumber int) bool {
 		return root.IsWord
 	}
 
-	// Check type of character
-	if unicode.IsLetter(rune(word[charNumber])) {
+	// Check if character is ASCII
+	if word[charNumber] >= 32 && word[charNumber] <= unicode.MaxASCII {
 
-		if unicode.IsUpper(rune(word[charNumber])) {
+		// Uppercase character
+		if word[charNumber] >= 65 && word[charNumber] <= 90 {
 			if charNumber == 0 {
-				if root.Children[byte(unicode.ToLower(rune(word[charNumber])))-'a'] != nil {
-					return checkWord(root.Children[byte(unicode.ToLower(rune(word[charNumber])))-'a'], word, charNumber+1)
+				// Pass character as uppercase
+				if root.Children[word[charNumber]] != nil {
+					return checkWord(root.Children[word[charNumber]], word, charNumber+1)
 				}
 			}
 
 			return false
 		} else {
 			// Check if character exists
-			if root.Children[word[charNumber]-'a'] != nil {
-				return checkWord(root.Children[word[charNumber]-'a'], word, charNumber+1)
+			if root.Children[word[charNumber]-FIRST_PRINTABLE_ASCII] != nil {
+				return checkWord(root.Children[word[charNumber]-FIRST_PRINTABLE_ASCII], word, charNumber+1)
 			}
 
 			return false

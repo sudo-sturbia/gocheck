@@ -5,15 +5,17 @@ import (
 	"bufio"
 	"log"
 	"os"
+	"unicode"
 )
 
 // A trie node
 type Node struct {
-	Children [SIZE_OF_ALPHABET]*Node // An array of nodes
-	IsWord   bool                    // True if node references a word ending, false otherwise
+	Children [PRINTABLE_ASCII]*Node // An array of nodes
+	IsWord   bool                   // True if node references a word ending, false otherwise
 }
 
-const SIZE_OF_ALPHABET = 26
+const PRINTABLE_ASCII = 95
+const FIRST_PRINTABLE_ASCII = 32
 
 // Load a dictionay of words into a Trie
 func LoadDictionary(path string) *Node {
@@ -51,10 +53,14 @@ func loadWord(root *Node, word string, charNumber int) *Node {
 	}
 
 	// If Node is not initialized
-	if root.Children[word[charNumber]-'a'] == nil {
-		root.Children[word[charNumber]-'a'] = new(Node)
+	if root.Children[word[charNumber]-FIRST_PRINTABLE_ASCII] == nil {
+		root.Children[word[charNumber]-FIRST_PRINTABLE_ASCII] = new(Node)
 	}
 
-	root.Children[word[charNumber]-'a'] = loadWord(root.Children[word[charNumber]-'a'], word, charNumber+1)
+	// If character is printable ASCII
+	if word[charNumber] >= 32 && word[charNumber] <= unicode.MaxASCII {
+		root.Children[word[charNumber]-FIRST_PRINTABLE_ASCII] = loadWord(root.Children[word[charNumber]-FIRST_PRINTABLE_ASCII], word, charNumber+1)
+	}
+
 	return root
 }
