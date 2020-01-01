@@ -1,4 +1,5 @@
-// Find spelling errors in a text file and print error messages
+// Package checker implements functions used to find spelling errors
+// in a given text file and print error messages accordingly.
 package checker
 
 import (
@@ -23,7 +24,7 @@ var Wg sync.WaitGroup
 const PRINTABLE_ASCII = 95
 const FIRST_PRINTABLE_ASCII = 32
 
-// Check file for spelling errors
+// Check file for spelling errors.
 func CheckFile(root *loader.Node, path string) {
 	spellingErrors = make([]string, 0)
 
@@ -57,7 +58,7 @@ func CheckFile(root *loader.Node, path string) {
 	}
 }
 
-// Find spelling errors in a line
+// Find spelling errors in a line (string) of words.
 func checkLine(root *loader.Node, textLine string, lineNumber int, wordEnd func(c rune) bool) {
 	defer Wg.Done()
 
@@ -87,7 +88,8 @@ func checkLine(root *loader.Node, textLine string, lineNumber int, wordEnd func(
 	}
 }
 
-// Check if a word exists in the dictionary
+// Return true if a word exists in the trie,
+// return false otherwise.
 func checkWord(root *loader.Node, word string, charNumber int) bool {
 
 	if charNumber == len(word) {
@@ -120,7 +122,7 @@ func checkWord(root *loader.Node, word string, charNumber int) bool {
 	}
 }
 
-// Print spelling errors
+// Print spelling errors.
 func PrintSpellingErrors() {
 	numberOfErrors := len(spellingErrors)
 

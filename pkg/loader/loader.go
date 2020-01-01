@@ -1,4 +1,5 @@
-// Load words from a file into a Trie to be used as a dictionary
+// Package loader implements functions for loading words
+// from a file into a trie to be used as a dictionary.
 package loader
 
 import (
@@ -13,7 +14,7 @@ const (
 	FIRST_PRINTABLE_ASCII = 32
 )
 
-// A trie node
+// A trie node.
 type Node struct {
 	children [PRINTABLE_ASCII]*Node // Children nodes
 	isWord   bool                   // True if node marks a word ending, false otherwise
@@ -30,7 +31,8 @@ func (n *Node) IsWord() bool {
 	return n.isWord
 }
 
-// Load a dictionay of words into a Trie
+// Load a dictionay of words into a trie.
+// Return a pointer to trie's head node.
 func LoadDictionary(path string) *Node {
 	// Open dictionary file
 	file, err := os.Open(path)
@@ -57,7 +59,8 @@ func LoadDictionary(path string) *Node {
 	return root
 }
 
-// Load a word into Trie
+// Load a word into trie.
+// Return a pointer to trie's head node.
 func loadWord(root *Node, word string, charNumber int) *Node {
 	// If end of word
 	if charNumber == len(word) {

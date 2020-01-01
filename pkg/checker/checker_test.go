@@ -1,4 +1,5 @@
-// Find spelling errors in a text file and print error messages
+// Package checker implements functions used to find spelling errors
+// in a given text file and print error messages accordingly.
 package checker
 
 import (
@@ -10,13 +11,13 @@ import (
 
 var root *loader.Node
 
-// Setup dictionary before testing
+// Setup dictionary before testing.
 func TestMain(m *testing.M) {
 	root = loader.LoadDictionary("../../test/test_words.txt")
 	os.Exit(m.Run())
 }
 
-// Test check file function on a file without errors
+// Test check file function on a file without errors.
 func TestCheckFileWithoutErrors(t *testing.T) {
 	CheckFile(root, "../../test/paragraph.txt")
 
@@ -27,7 +28,7 @@ func TestCheckFileWithoutErrors(t *testing.T) {
 
 }
 
-// Test check file function on a file with errors
+// Test check file function on a file with errors.
 func TestCheckFileWithErrors(t *testing.T) {
 	CheckFile(root, "../../test/paragraph-wrong.txt")
 
@@ -57,7 +58,7 @@ func TestCheckFileWithErrors(t *testing.T) {
 
 }
 
-// Benchmark processing time
+// Benchmark processing time.
 func BenchmarkWordProcessing(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		CheckFile(root, "../../test/paragraph.txt")
