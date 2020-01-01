@@ -1,6 +1,7 @@
 package loader
 
 import (
+	"os"
 	"testing"
 )
 
@@ -16,7 +17,7 @@ func TestWordLoading(t *testing.T) {
 
 // Test dictionary loading
 func TestDictionaryLoading(t *testing.T) {
-	root := LoadDictionary("../../test/test_load.txt")
+	root := LoadDictionary(os.Getenv("GOPATH") + "/src/github.com/sudo-sturbia/gocheck/test/test_load.txt")
 
 	// Test loaded words
 	words := []string{
@@ -49,6 +50,6 @@ func isWordLoaded(root *Node, word string, whichChar int) bool {
 // Benchmark dictionary loading
 func BenchmarkDictionaryLoading(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		LoadDictionary("../../test/test_words.txt")
+		LoadDictionary(os.Getenv("GOPATH") + "/src/github.com/sudo-sturbia/gocheck/test/test_words.txt")
 	}
 }
