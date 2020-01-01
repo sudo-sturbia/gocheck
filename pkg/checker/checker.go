@@ -91,7 +91,7 @@ func checkLine(root *loader.Node, textLine string, lineNumber int, wordEnd func(
 func checkWord(root *loader.Node, word string, charNumber int) bool {
 
 	if charNumber == len(word) {
-		return root.IsWord
+		return root.IsWord()
 	}
 
 	// Check if character is ASCII
@@ -101,16 +101,16 @@ func checkWord(root *loader.Node, word string, charNumber int) bool {
 		if word[charNumber] >= 65 && word[charNumber] <= 90 {
 			if charNumber == 0 {
 				// Pass character as uppercase
-				if root.Children[word[charNumber]] != nil {
-					return checkWord(root.Children[word[charNumber]], word, charNumber+1)
+				if root.Children()[word[charNumber]] != nil {
+					return checkWord(root.Children()[word[charNumber]], word, charNumber+1)
 				}
 			}
 
 			return false
 		} else {
 			// Check if character exists
-			if root.Children[word[charNumber]-FIRST_PRINTABLE_ASCII] != nil {
-				return checkWord(root.Children[word[charNumber]-FIRST_PRINTABLE_ASCII], word, charNumber+1)
+			if root.Children()[word[charNumber]-FIRST_PRINTABLE_ASCII] != nil {
+				return checkWord(root.Children()[word[charNumber]-FIRST_PRINTABLE_ASCII], word, charNumber+1)
 			}
 
 			return false
