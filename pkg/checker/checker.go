@@ -14,19 +14,29 @@ import (
 	"github.com/sudo-sturbia/gocheck/pkg/loader"
 )
 
-var spellingErrors []string
-var IgnoredWords map[string]bool
-var IgnoreUppercase bool
+const (
+	PRINTABLE_ASCII       = 95
+	FIRST_PRINTABLE_ASCII = 32
+)
 
-var mux sync.Mutex
-var Wg sync.WaitGroup
+// Concurrency related variables.
+var (
+	mux sync.Mutex
+	wg  sync.WaitGroup
+)
 
-const PRINTABLE_ASCII = 95
-const FIRST_PRINTABLE_ASCII = 32
+// Spellchecker, holds data related to
+// spelling errors and verification.
+type Checker struct {
+	spellingErrors []string // A list of spelling errors
+
+	ignoredWords    map[string]bool // A map of words to ignore
+	ignoreUppercase bool            // Consider all given words to be lowercase
+}
 
 // Check file for spelling errors.
-func CheckFile(root *loader.Node, path string) {
-	spellingErrors = make([]string, 0)
+func (c *Checker) CheckFile(root *loader.Node, path string) {
+	c.spellingErrors = make([]string, 0)
 
 	// Open file
 	file, err := os.Open(path)
@@ -47,8 +57,8 @@ func CheckFile(root *loader.Node, path string) {
 	for fileScanner.Scan() {
 		textLine := fileScanner.Text()
 
-		Wg.Add(1)
-		go checkLine(root, textLine, lineNumber, wordEnd)
+		wg.Add(1)
+		go c.checkLine(root, textLine, lineNumber, wordEnd)
 
 		lineNumber++
 	}
@@ -58,21 +68,23 @@ func CheckFile(root *loader.Node, path string) {
 	}
 }
 
-// Find spelling errors in a line (string) of words.
-func checkLine(root *loader.Node, textLine string, lineNumber int, wordEnd func(c rune) bool) {
-	defer Wg.Done()
+// Finds spelling errors in a line (string) of words.
+// Adds found errors to errors array.
+// Spelling errors are formatted as --- At (row, word)  "Error".
+func (c *Checker) checkLine(root *loader.Node, textLine string, lineNumber int, wordEnd func(c rune) bool) {
+	defer wg.Done()
 
 	spellingErrorsInLine := make([]string, 0)
 	words := strings.FieldsFunc(textLine, wordEnd)
 
 	hasErrors := false
 	for i := 0; i < len(words); i++ {
-		if !IgnoredWords[words[i]] {
-			if IgnoreUppercase {
+		if !c.ignoredWords[words[i]] {
+			if c.ignoreUppercase {
 				words[i] = strings.ToLower(words[i])
 			}
 
-			if !checkWord(root, words[i], 0) {
+			if !c.checkWord(root, words[i], 0) {
 				// Add spelling error to list
 				spellingErrorsInLine = append(spellingErrorsInLine, fmt.Sprintf("At (%d, %d)  \"%s\"", lineNumber, i, words[i]))
 				hasErrors = true
@@ -83,14 +95,14 @@ func checkLine(root *loader.Node, textLine string, lineNumber int, wordEnd func(
 	// Add line's errors to errors' slice
 	if hasErrors {
 		mux.Lock()
-		spellingErrors = append(spellingErrors, spellingErrorsInLine...)
+		c.spellingErrors = append(c.spellingErrors, spellingErrorsInLine...)
 		mux.Unlock()
 	}
 }
 
 // Return true if a word exists in the trie,
 // return false otherwise.
-func checkWord(root *loader.Node, word string, charNumber int) bool {
+func (c *Checker) checkWord(root *loader.Node, word string, charNumber int) bool {
 
 	if charNumber == len(word) {
 		return root.IsWord()
@@ -104,7 +116,7 @@ func checkWord(root *loader.Node, word string, charNumber int) bool {
 			if charNumber == 0 {
 				// Pass character as uppercase
 				if root.Children()[word[charNumber]] != nil {
-					return checkWord(root.Children()[word[charNumber]], word, charNumber+1)
+					return c.checkWord(root.Children()[word[charNumber]], word, charNumber+1)
 				}
 			}
 
@@ -112,7 +124,7 @@ func checkWord(root *loader.Node, word string, charNumber int) bool {
 		} else {
 			// Check if character exists
 			if root.Children()[word[charNumber]-FIRST_PRINTABLE_ASCII] != nil {
-				return checkWord(root.Children()[word[charNumber]-FIRST_PRINTABLE_ASCII], word, charNumber+1)
+				return c.checkWord(root.Children()[word[charNumber]-FIRST_PRINTABLE_ASCII], word, charNumber+1)
 			}
 
 			return false
@@ -123,11 +135,11 @@ func checkWord(root *loader.Node, word string, charNumber int) bool {
 }
 
 // Print spelling errors.
-func PrintSpellingErrors() {
-	numberOfErrors := len(spellingErrors)
+func (c *Checker) PrintSpellingErrors() {
+	numberOfErrors := len(c.spellingErrors)
 
 	for i := 0; i < numberOfErrors; i++ {
-		fmt.Println(spellingErrors[i])
+		fmt.Println(c.spellingErrors[i])
 	}
 
 	fmt.Printf("- Found a total of %d errors.\n", numberOfErrors)
