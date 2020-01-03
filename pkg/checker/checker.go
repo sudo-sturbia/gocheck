@@ -34,6 +34,16 @@ type Checker struct {
 	ignoreUppercase bool            // Consider all given words to be lowercase
 }
 
+// Add a word to the ignored words list.
+func (c *Checker) AddWordToIgnore(word string) {
+	c.ignoredWords[word] = true
+}
+
+// Set ignore uppercase boolean.
+func (c *Checker) SetIgnoreUppercase(ignore bool) {
+	c.ignoreUppercase = true
+}
+
 // Check file for spelling errors.
 func (c *Checker) CheckFile(root *loader.Node, path string) {
 	c.spellingErrors = make([]string, 0)
@@ -66,6 +76,8 @@ func (c *Checker) CheckFile(root *loader.Node, path string) {
 	if err := fileScanner.Err(); err != nil {
 		log.Fatal(err)
 	}
+
+	wg.Wait()
 }
 
 // Finds spelling errors in a line (string) of words.
@@ -78,21 +90,22 @@ func (c *Checker) checkLine(root *loader.Node, textLine string, lineNumber int, 
 	words := strings.FieldsFunc(textLine, wordEnd)
 
 	hasErrors := false
-	for i := 0; i < len(words); i++ {
-		if !c.ignoredWords[words[i]] {
+
+	for i, word := range words {
+		if !c.ignoredWords[word] {
 			if c.ignoreUppercase {
-				words[i] = strings.ToLower(words[i])
+				word = strings.ToLower(word)
 			}
 
-			if !c.checkWord(root, words[i], 0) {
-				// Add spelling error to list
-				spellingErrorsInLine = append(spellingErrorsInLine, fmt.Sprintf("At (%d, %d)  \"%s\"", lineNumber, i, words[i]))
+			if !c.checkWord(root, word, 0) {
+				// Add formatted error to list
+				spellingErrorsInLine = append(spellingErrorsInLine, fmt.Sprintf("At (%d, %d)  \"%s\"", lineNumber, i, word))
 				hasErrors = true
 			}
 		}
 	}
 
-	// Add line's errors to errors' slice
+	// Add line's errors to errors slice
 	if hasErrors {
 		mux.Lock()
 		c.spellingErrors = append(c.spellingErrors, spellingErrorsInLine...)
@@ -136,11 +149,9 @@ func (c *Checker) checkWord(root *loader.Node, word string, charNumber int) bool
 
 // Print spelling errors.
 func (c *Checker) PrintSpellingErrors() {
-	numberOfErrors := len(c.spellingErrors)
-
-	for i := 0; i < numberOfErrors; i++ {
-		fmt.Println(c.spellingErrors[i])
+	for _, spellingError := range c.spellingErrors {
+		fmt.Println(spellingError)
 	}
 
-	fmt.Printf("- Found a total of %d errors.\n", numberOfErrors)
+	fmt.Printf("- Found a total of %d errors.\n", len(c.spellingErrors))
 }
