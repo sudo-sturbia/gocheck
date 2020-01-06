@@ -17,29 +17,54 @@ import (
 func Parse() (string, string) {
 	// Ignore uppercase flag
 	uString := "ignore uppercase letters. " +
-		"By default a word that contains an uppercase letter any where but the start is considered wrong, \n" +
-		"when this flag is used, this feature is disabled."
+		"By default a word that contains\nan uppercase letter any where but the start is considered\nwrong," +
+		"when this flag is used, this feature is disabled.\n"
 
 	uppercaseShort := flag.Bool("u", false, uString)
 	uppercaseLong := flag.Bool("uppercase", false, uString)
 
 	// Ignore word flag
 	iString := "ignore specified word (specified word is considered correct.) " +
-		"This flag can be used an unlimited amount of times."
+		"This\nflag can be used an unlimited amount of times.\n"
 
 	flag.Var(new(ignore), "i", iString)
 	flag.Var(new(ignore), "ignore", iString)
 
 	// Help flag
-	helpShort := flag.Bool("h", false, "")
-	helpLong := flag.Bool("help", false, "")
+	helpShort := flag.Bool("h", false, "Print this help message.")
+	helpLong := flag.Bool("help", false, "Print this help message.")
 
 	// Parsing
 	flag.Parse()
 
 	if *helpShort || *helpLong {
-		// TODO
-		fmt.Println("")
+		fmt.Println(
+			"gocheck is a simple, fast spell-checker.\n" +
+				"It works by comparing a file against a given list of words and printing errors.\n" +
+				"\n" +
+				"Usage\n" +
+				"\n" +
+				"    gocheck [OPTIONS] <FILEPATH> <DICTIONARYPATH>\n" +
+				"\n" +
+				"Required arguments:\n" +
+				"\n" +
+				"    <FILEPATH>        Path to a text file that should be processed to find errors.\n" +
+				"    <DICTIONARYPATH>  Path to a text file containing a list of words, one word per\n" +
+				"                      line, to compare the other file against.\n" +
+				"\n" +
+				"Options:\n" +
+				"\n" +
+				"    -h --help         Print this help message.\n" +
+				"\n" +
+				"    -i --ignore WORD  Ignore specified word (WORD is considered correct.) This\n" +
+				"                      flag can be used an unlimited amount of times.\n" +
+				"\n" +
+				"    -u --uppercase    Ignore uppercase letters. By default a word that contains\n" +
+				"                      an uppercase letter any where but the start is considered\n" +
+				"                      wrong, when this flag is used, this feature is disabled.\n" +
+				"\n" +
+				"For the source code check the github page [github.com/sudo-sturbia/gocheck]\n",
+		)
 		os.Exit(0)
 	}
 
