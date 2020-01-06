@@ -1,4 +1,5 @@
-// Find spelling errors in a text file and print error messages
+// Package checker implements functions used to find spelling errors
+// in a given text file and print error messages accordingly.
 package checker
 
 import (
@@ -8,32 +9,34 @@ import (
 	"github.com/sudo-sturbia/gocheck/pkg/loader"
 )
 
-var root *loader.Node
+var (
+	testChecker *checker
+	root        *loader.Node
+)
 
-// Setup dictionary before testing
+// Setup dictionary before testing.
 func TestMain(m *testing.M) {
 	root = loader.LoadDictionary(os.Getenv("GOPATH") + "/src/github.com/sudo-sturbia/gocheck/test/test_words.txt")
 	os.Exit(m.Run())
 }
 
-// Test check file function on a file without errors
+// Test check file function on a file without errors.
 func TestCheckFileWithoutErrors(t *testing.T) {
-	CheckFile(root, os.Getenv("GOPATH")+"/src/github.com/sudo-sturbia/gocheck/test/paragraph.txt")
+	testChecker = reInit()
+	testChecker.CheckFile(root, os.Getenv("GOPATH")+"/src/github.com/sudo-sturbia/gocheck/test/paragraph.txt")
 
-	Wg.Wait()
-	if len(spellingErrors) != 0 {
-		t.Errorf("Number of spelling errors incorrect, expected: 0, got: %d", len(spellingErrors))
+	if len(testChecker.spellingErrors) != 0 {
+		t.Errorf("Number of spelling errors incorrect, expected: 0, got: %d", len(testChecker.spellingErrors))
 	}
-
 }
 
-// Test check file function on a file with errors
+// Test check file function on a file with errors.
 func TestCheckFileWithErrors(t *testing.T) {
-	CheckFile(root, os.Getenv("GOPATH")+"/src/github.com/sudo-sturbia/gocheck/test/paragraph-wrong.txt")
+	testChecker = reInit()
+	testChecker.CheckFile(root, os.Getenv("GOPATH")+"/src/github.com/sudo-sturbia/gocheck/test/paragraph-wrong.txt")
 
-	Wg.Wait()
-	if len(spellingErrors) != 8 {
-		t.Errorf("Number of spelling errors incorrect, expected: 8, got: %d", len(spellingErrors))
+	if len(testChecker.spellingErrors) != 8 {
+		t.Errorf("Number of spelling errors incorrect, expected: 8, got: %d", len(testChecker.spellingErrors))
 	}
 
 	// Assert errors found in file
@@ -50,16 +53,17 @@ func TestCheckFileWithErrors(t *testing.T) {
 	errorMap["At (3, 9)  \"rmation\""] = true
 
 	for i := 0; i < 8; i++ {
-		if !errorMap[spellingErrors[i]] {
-			t.Errorf("Found incorrect error: %s", spellingErrors[i])
+		if !errorMap[testChecker.spellingErrors[i]] {
+			t.Errorf("Found incorrect error: %s", testChecker.spellingErrors[i])
 		}
 	}
 
 }
 
-// Benchmark processing time
+// Benchmark processing time.
 func BenchmarkWordProcessing(b *testing.B) {
+	testChecker = reInit()
 	for n := 0; n < b.N; n++ {
-		CheckFile(root, os.Getenv("GOPATH")+"/src/github.com/sudo-sturbia/gocheck/test/paragraph.txt")
+		testChecker.CheckFile(root, os.Getenv("GOPATH")+"/src/github.com/sudo-sturbia/gocheck/test/paragraph.txt")
 	}
 }

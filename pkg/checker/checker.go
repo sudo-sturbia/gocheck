@@ -1,4 +1,5 @@
-// Find spelling errors in a text file and print error messages
+// Package checker implements functions used to find spelling errors
+// in a given text file and print error messages accordingly.
 package checker
 
 import (
@@ -13,19 +14,71 @@ import (
 	"github.com/sudo-sturbia/gocheck/pkg/loader"
 )
 
-var spellingErrors []string
-var IgnoredWords map[string]bool
-var IgnoreUppercase bool
+const (
+	PRINTABLE_ASCII       = 95
+	FIRST_PRINTABLE_ASCII = 32
+)
 
-var mux sync.Mutex
-var Wg sync.WaitGroup
+// Concurrency related variables.
+var (
+	mux  sync.Mutex
+	wg   sync.WaitGroup
+	once sync.Once
+)
 
-const PRINTABLE_ASCII = 95
-const FIRST_PRINTABLE_ASCII = 32
+// checker, holds data related to
+// spelling errors and verification.
+type checker struct {
+	spellingErrors []string // A list of spelling errors
 
-// Check file for spelling errors
-func CheckFile(root *loader.Node, path string) {
-	spellingErrors = make([]string, 0)
+	ignoredWords    map[string]bool // A map of words to ignore
+	ignoreUppercase bool            // Consider all given words to be lowercase
+}
+
+var instance *checker // Singleton instance
+
+// Return a pointer to a checker singleton instance.
+// checker instance is only initialized once.
+func Instance() *checker {
+	once.Do(func() {
+		instance = new(checker)
+		instance.ignoredWords = make(map[string]bool)
+	})
+	return instance
+}
+
+// Re-initialize checker instance and return newly initialized instance.
+// Meant to be used in testing.
+func reInit() *checker {
+	instance = new(checker)
+	instance.ignoredWords = make(map[string]bool)
+
+	return instance
+}
+
+// Add a word to the ignored words list.
+func (c *checker) AddIgnoredWord(word string) {
+	c.ignoredWords[word] = true
+}
+
+// Return a string containing all ignored words.
+func (c *checker) IgnoredString() string {
+	var stringForm string
+	for key, _ := range c.ignoredWords {
+		stringForm += fmt.Sprintf("%s ", key)
+	}
+
+	return stringForm
+}
+
+// Set ignore uppercase boolean.
+func (c *checker) SetIgnoreUppercase(ignore bool) {
+	c.ignoreUppercase = true
+}
+
+// Check file for spelling errors.
+func (c *checker) CheckFile(root *loader.Node, path string) {
+	c.spellingErrors = make([]string, 0)
 
 	// Open file
 	file, err := os.Open(path)
@@ -46,8 +99,8 @@ func CheckFile(root *loader.Node, path string) {
 	for fileScanner.Scan() {
 		textLine := fileScanner.Text()
 
-		Wg.Add(1)
-		go checkLine(root, textLine, lineNumber, wordEnd)
+		wg.Add(1)
+		go c.checkLine(root, textLine, lineNumber, wordEnd)
 
 		lineNumber++
 	}
@@ -55,43 +108,49 @@ func CheckFile(root *loader.Node, path string) {
 	if err := fileScanner.Err(); err != nil {
 		log.Fatal(err)
 	}
+
+	wg.Wait()
 }
 
-// Find spelling errors in a line
-func checkLine(root *loader.Node, textLine string, lineNumber int, wordEnd func(c rune) bool) {
-	defer Wg.Done()
+// Finds spelling errors in a line (string) of words.
+// Adds found errors to errors array.
+// Spelling errors are formatted as --- At (row, word)  "Error".
+func (c *checker) checkLine(root *loader.Node, textLine string, lineNumber int, wordEnd func(c rune) bool) {
+	defer wg.Done()
 
 	spellingErrorsInLine := make([]string, 0)
 	words := strings.FieldsFunc(textLine, wordEnd)
 
 	hasErrors := false
-	for i := 0; i < len(words); i++ {
-		if !IgnoredWords[words[i]] {
-			if IgnoreUppercase {
-				words[i] = strings.ToLower(words[i])
+
+	for i, word := range words {
+		if !c.ignoredWords[word] {
+			if c.ignoreUppercase {
+				word = strings.ToLower(word)
 			}
 
-			if !checkWord(root, words[i], 0) {
-				// Add spelling error to list
-				spellingErrorsInLine = append(spellingErrorsInLine, fmt.Sprintf("At (%d, %d)  \"%s\"", lineNumber, i, words[i]))
+			if !c.checkWord(root, word, 0) {
+				// Add formatted error to list
+				spellingErrorsInLine = append(spellingErrorsInLine, fmt.Sprintf("At (%d, %d)  \"%s\"", lineNumber, i, word))
 				hasErrors = true
 			}
 		}
 	}
 
-	// Add line's errors to errors' slice
+	// Add line's errors to errors slice
 	if hasErrors {
 		mux.Lock()
-		spellingErrors = append(spellingErrors, spellingErrorsInLine...)
+		c.spellingErrors = append(c.spellingErrors, spellingErrorsInLine...)
 		mux.Unlock()
 	}
 }
 
-// Check if a word exists in the dictionary
-func checkWord(root *loader.Node, word string, charNumber int) bool {
+// Return true if a word exists in the trie,
+// return false otherwise.
+func (c *checker) checkWord(root *loader.Node, word string, charNumber int) bool {
 
 	if charNumber == len(word) {
-		return root.IsWord
+		return root.IsWord()
 	}
 
 	// Check if character is ASCII
@@ -101,16 +160,16 @@ func checkWord(root *loader.Node, word string, charNumber int) bool {
 		if word[charNumber] >= 65 && word[charNumber] <= 90 {
 			if charNumber == 0 {
 				// Pass character as uppercase
-				if root.Children[word[charNumber]] != nil {
-					return checkWord(root.Children[word[charNumber]], word, charNumber+1)
+				if root.Children()[word[charNumber]] != nil {
+					return c.checkWord(root.Children()[word[charNumber]], word, charNumber+1)
 				}
 			}
 
 			return false
 		} else {
 			// Check if character exists
-			if root.Children[word[charNumber]-FIRST_PRINTABLE_ASCII] != nil {
-				return checkWord(root.Children[word[charNumber]-FIRST_PRINTABLE_ASCII], word, charNumber+1)
+			if root.Children()[word[charNumber]-FIRST_PRINTABLE_ASCII] != nil {
+				return c.checkWord(root.Children()[word[charNumber]-FIRST_PRINTABLE_ASCII], word, charNumber+1)
 			}
 
 			return false
@@ -120,13 +179,11 @@ func checkWord(root *loader.Node, word string, charNumber int) bool {
 	}
 }
 
-// Print spelling errors
-func PrintSpellingErrors() {
-	numberOfErrors := len(spellingErrors)
-
-	for i := 0; i < numberOfErrors; i++ {
-		fmt.Println(spellingErrors[i])
+// Print spelling errors.
+func (c *checker) PrintSpellingErrors() {
+	for _, spellingError := range c.spellingErrors {
+		fmt.Println(spellingError)
 	}
 
-	fmt.Printf("- Found a total of %d errors.\n", numberOfErrors)
+	fmt.Printf("- Found a total of %d errors.\n", len(c.spellingErrors))
 }
