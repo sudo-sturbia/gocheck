@@ -42,6 +42,7 @@ var instance *checker // Singleton instance
 func Instance() *checker {
 	once.Do(func() {
 		instance = new(checker)
+		instance.ignoredWords = make(map[string]bool)
 	})
 	return instance
 }
@@ -50,12 +51,24 @@ func Instance() *checker {
 // Meant to be used in testing.
 func reInit() *checker {
 	instance = new(checker)
+	instance.ignoredWords = make(map[string]bool)
+
 	return instance
 }
 
 // Add a word to the ignored words list.
-func (c *checker) AddWordToIgnore(word string) {
+func (c *checker) AddIgnoredWord(word string) {
 	c.ignoredWords[word] = true
+}
+
+// Return a string containing all ignored words.
+func (c *checker) IgnoredString() string {
+	var stringForm string
+	for key, _ := range c.ignoredWords {
+		stringForm += fmt.Sprintf("%s ", key)
+	}
+
+	return stringForm
 }
 
 // Set ignore uppercase boolean.

@@ -3,6 +3,7 @@ package main
 
 import (
 	"github.com/sudo-sturbia/gocheck/pkg/checker"
+	"github.com/sudo-sturbia/gocheck/pkg/cli"
 	"github.com/sudo-sturbia/gocheck/pkg/loader"
 )
 
@@ -10,10 +11,8 @@ import (
 func main() {
 	spellChecker := checker.Instance()
 
-	// Find paths
-	// TODO ..
-	filePath := ""
-	dictionaryPath := ""
+	// Get paths
+	filePath, dictionaryPath := cli.Parse()
 
 	dictionary := loader.LoadDictionary(dictionaryPath)
 
