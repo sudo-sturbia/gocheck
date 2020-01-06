@@ -8,7 +8,7 @@ import (
 
 // Initialize program and parse command line flags
 func main() {
-	var spellChecker checker.Checker
+	spellChecker := checker.Instance()
 
 	// Find paths
 	// TODO ..

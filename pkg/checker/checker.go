@@ -21,31 +21,50 @@ const (
 
 // Concurrency related variables.
 var (
-	mux sync.Mutex
-	wg  sync.WaitGroup
+	mux  sync.Mutex
+	wg   sync.WaitGroup
+	once sync.Once
 )
 
-// Spellchecker, holds data related to
+// checker, holds data related to
 // spelling errors and verification.
-type Checker struct {
+type checker struct {
 	spellingErrors []string // A list of spelling errors
 
 	ignoredWords    map[string]bool // A map of words to ignore
 	ignoreUppercase bool            // Consider all given words to be lowercase
 }
 
+var instance *checker // Singleton instance
+
+// Return a pointer to a checker singleton instance.
+// checker instance is only initialized once.
+func Instance() *checker {
+	once.Do(func() {
+		instance = new(checker)
+	})
+	return instance
+}
+
+// Re-initialize checker instance and return newly initialized instance.
+// Meant to be used in testing.
+func reInit() *checker {
+	instance = new(checker)
+	return instance
+}
+
 // Add a word to the ignored words list.
-func (c *Checker) AddWordToIgnore(word string) {
+func (c *checker) AddWordToIgnore(word string) {
 	c.ignoredWords[word] = true
 }
 
 // Set ignore uppercase boolean.
-func (c *Checker) SetIgnoreUppercase(ignore bool) {
+func (c *checker) SetIgnoreUppercase(ignore bool) {
 	c.ignoreUppercase = true
 }
 
 // Check file for spelling errors.
-func (c *Checker) CheckFile(root *loader.Node, path string) {
+func (c *checker) CheckFile(root *loader.Node, path string) {
 	c.spellingErrors = make([]string, 0)
 
 	// Open file
@@ -83,7 +102,7 @@ func (c *Checker) CheckFile(root *loader.Node, path string) {
 // Finds spelling errors in a line (string) of words.
 // Adds found errors to errors array.
 // Spelling errors are formatted as --- At (row, word)  "Error".
-func (c *Checker) checkLine(root *loader.Node, textLine string, lineNumber int, wordEnd func(c rune) bool) {
+func (c *checker) checkLine(root *loader.Node, textLine string, lineNumber int, wordEnd func(c rune) bool) {
 	defer wg.Done()
 
 	spellingErrorsInLine := make([]string, 0)
@@ -115,7 +134,7 @@ func (c *Checker) checkLine(root *loader.Node, textLine string, lineNumber int, 
 
 // Return true if a word exists in the trie,
 // return false otherwise.
-func (c *Checker) checkWord(root *loader.Node, word string, charNumber int) bool {
+func (c *checker) checkWord(root *loader.Node, word string, charNumber int) bool {
 
 	if charNumber == len(word) {
 		return root.IsWord()
@@ -148,7 +167,7 @@ func (c *Checker) checkWord(root *loader.Node, word string, charNumber int) bool
 }
 
 // Print spelling errors.
-func (c *Checker) PrintSpellingErrors() {
+func (c *checker) PrintSpellingErrors() {
 	for _, spellingError := range c.spellingErrors {
 		fmt.Println(spellingError)
 	}
