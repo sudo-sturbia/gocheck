@@ -21,48 +21,41 @@ const (
 
 // Concurrency related variables.
 var (
-	mux  sync.Mutex
-	wg   sync.WaitGroup
-	once sync.Once
+	mux sync.Mutex
+	wg  sync.WaitGroup
 )
 
-// checker, holds data related to
+// Checker, holds data related to
 // spelling errors and verification.
-type checker struct {
+type Checker struct {
 	spellingErrors []string // A list of spelling errors
 
 	ignoredWords    map[string]bool // A map of words to ignore
 	ignoreUppercase bool            // Consider all given words to be lowercase
 }
 
-var instance *checker // Singleton instance
-
-// Return a pointer to a checker singleton instance.
-// checker instance is only initialized once.
-func Instance() *checker {
-	once.Do(func() {
-		instance = new(checker)
-		instance.ignoredWords = make(map[string]bool)
-	})
-	return instance
-}
-
-// Re-initialize checker instance and return newly initialized instance.
-// Meant to be used in testing.
-func reInit() *checker {
-	instance = new(checker)
+// New returns pointer to a new, initialized Checker object.
+func New() *Checker {
+	instance := new(Checker)
 	instance.ignoredWords = make(map[string]bool)
 
 	return instance
 }
 
 // Add a word to the ignored words list.
-func (c *checker) AddIgnoredWord(word string) {
+func (c *Checker) AddWordToIgnored(word string) {
 	c.ignoredWords[word] = true
 }
 
+// Add a given list of words to ignored words.
+func (c *Checker) AddListToIgnored(words []string) {
+	for _, word := range words {
+		c.ignoredWords[word] = true
+	}
+}
+
 // Return a string containing all ignored words.
-func (c *checker) IgnoredString() string {
+func (c *Checker) IgnoredString() string {
 	var stringForm string
 	for key, _ := range c.ignoredWords {
 		stringForm += fmt.Sprintf("%s ", key)
@@ -72,12 +65,12 @@ func (c *checker) IgnoredString() string {
 }
 
 // Set ignore uppercase boolean.
-func (c *checker) SetIgnoreUppercase(ignore bool) {
+func (c *Checker) SetIgnoreUppercase(ignore bool) {
 	c.ignoreUppercase = true
 }
 
 // Check file for spelling errors.
-func (c *checker) CheckFile(root *loader.Node, path string) {
+func (c *Checker) CheckFile(root *loader.Node, path string) {
 	c.spellingErrors = make([]string, 0)
 
 	// Open file
@@ -115,7 +108,7 @@ func (c *checker) CheckFile(root *loader.Node, path string) {
 // Finds spelling errors in a line (string) of words.
 // Adds found errors to errors array.
 // Spelling errors are formatted as --- At (row, word)  "Error".
-func (c *checker) checkLine(root *loader.Node, textLine string, lineNumber int, wordEnd func(c rune) bool) {
+func (c *Checker) checkLine(root *loader.Node, textLine string, lineNumber int, wordEnd func(c rune) bool) {
 	defer wg.Done()
 
 	spellingErrorsInLine := make([]string, 0)
@@ -147,7 +140,7 @@ func (c *checker) checkLine(root *loader.Node, textLine string, lineNumber int, 
 
 // Return true if a word exists in the trie,
 // return false otherwise.
-func (c *checker) checkWord(root *loader.Node, word string, charNumber int) bool {
+func (c *Checker) checkWord(root *loader.Node, word string, charNumber int) bool {
 
 	if charNumber == len(word) {
 		return root.IsWord()
@@ -180,7 +173,7 @@ func (c *checker) checkWord(root *loader.Node, word string, charNumber int) bool
 }
 
 // Print spelling errors.
-func (c *checker) PrintSpellingErrors() {
+func (c *Checker) PrintSpellingErrors() {
 	for _, spellingError := range c.spellingErrors {
 		fmt.Println(spellingError)
 	}

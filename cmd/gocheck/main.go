@@ -7,9 +7,11 @@ import (
 	"github.com/sudo-sturbia/gocheck/pkg/loader"
 )
 
+var spellChecker *checker.Checker
+
 // Initialize program and parse command line flags
 func main() {
-	spellChecker := checker.Instance()
+	spellChecker = checker.New()
 
 	// Get paths
 	filePath, dictionaryPath := parse()

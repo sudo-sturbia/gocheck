@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-
-	"github.com/sudo-sturbia/gocheck/pkg/checker"
 )
 
 // parse command line arguments and flags.
@@ -68,7 +66,7 @@ func parse() (string, string) {
 		os.Exit(0)
 	}
 
-	checker.Instance().SetIgnoreUppercase(*uppercaseShort || *uppercaseLong)
+	spellChecker.SetIgnoreUppercase(*uppercaseShort || *uppercaseLong)
 
 	// Command line arguments
 	file := flag.Arg(0)
@@ -89,11 +87,11 @@ type ignore string
 
 // Return string representation.
 func (i *ignore) String() string {
-	return "Ignored words: " + checker.Instance().IgnoredString()
+	return "Ignored words: " + spellChecker.IgnoredString()
 }
 
 // Set value adds given string to list of ignored strings.
 func (i *ignore) Set(value string) error {
-	checker.Instance().AddIgnoredWord(value)
+	spellChecker.AddWordToIgnored(value)
 	return nil
 }

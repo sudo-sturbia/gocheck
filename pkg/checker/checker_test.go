@@ -9,10 +9,8 @@ import (
 	"github.com/sudo-sturbia/gocheck/pkg/loader"
 )
 
-var (
-	testChecker *checker
-	root        *loader.Node
-)
+// Root Node of loaded dictionary.
+var root *loader.Node
 
 // Setup dictionary before testing.
 func TestMain(m *testing.M) {
@@ -22,7 +20,7 @@ func TestMain(m *testing.M) {
 
 // Test check file function on a file without errors.
 func TestCheckFileWithoutErrors(t *testing.T) {
-	testChecker = reInit()
+	testChecker := New()
 	testChecker.CheckFile(root, os.Getenv("GOPATH")+"/src/github.com/sudo-sturbia/gocheck/test/paragraph.txt")
 
 	if len(testChecker.spellingErrors) != 0 {
@@ -32,7 +30,7 @@ func TestCheckFileWithoutErrors(t *testing.T) {
 
 // Test check file function on a file with errors.
 func TestCheckFileWithErrors(t *testing.T) {
-	testChecker = reInit()
+	testChecker := New()
 	testChecker.CheckFile(root, os.Getenv("GOPATH")+"/src/github.com/sudo-sturbia/gocheck/test/paragraph-wrong.txt")
 
 	if len(testChecker.spellingErrors) != 8 {
@@ -62,7 +60,7 @@ func TestCheckFileWithErrors(t *testing.T) {
 
 // Benchmark processing time.
 func BenchmarkWordProcessing(b *testing.B) {
-	testChecker = reInit()
+	testChecker := New()
 	for n := 0; n < b.N; n++ {
 		testChecker.CheckFile(root, os.Getenv("GOPATH")+"/src/github.com/sudo-sturbia/gocheck/test/paragraph.txt")
 	}
