@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	PRINTABLE_ASCII       = 95
-	FIRST_PRINTABLE_ASCII = 32
+	printableASCII      = 95
+	firstPrintableASCII = 32
 )
 
 // Concurrency related variables.
@@ -25,7 +25,7 @@ var (
 	wg  sync.WaitGroup
 )
 
-// Checker, holds data related to
+// Checker holds data related to
 // spelling errors and verification.
 type Checker struct {
 	spellingErrors []string // A list of spelling errors
@@ -42,34 +42,35 @@ func New() *Checker {
 	return instance
 }
 
-// Add a word to the ignored words list.
+// AddWordToIgnored adds a word to the ignored words list.
 func (c *Checker) AddWordToIgnored(word string) {
 	c.ignoredWords[word] = true
 }
 
-// Add a given list of words to ignored words.
+// AddListToIgnored adds a given list of words to ignored words.
 func (c *Checker) AddListToIgnored(words []string) {
 	for _, word := range words {
 		c.ignoredWords[word] = true
 	}
 }
 
-// Return a string containing all ignored words.
+// IgnoredString returns a string containing all ignored words.
 func (c *Checker) IgnoredString() string {
 	var stringForm string
-	for key, _ := range c.ignoredWords {
+	for key := range c.ignoredWords {
 		stringForm += fmt.Sprintf("%s ", key)
 	}
 
 	return stringForm
 }
 
-// Set ignore uppercase boolean.
+// SetIgnoreUppercase sets Checker's ignoreUppercase flag.
 func (c *Checker) SetIgnoreUppercase(ignore bool) {
 	c.ignoreUppercase = true
 }
 
-// Check file for spelling errors.
+// CheckFile checks file for spelling errors and populates
+// Checker's spellingErrors list.
 func (c *Checker) CheckFile(root *loader.Node, path string) {
 	c.spellingErrors = make([]string, 0)
 
@@ -159,20 +160,21 @@ func (c *Checker) checkWord(root *loader.Node, word string, charNumber int) bool
 			}
 
 			return false
-		} else {
-			// Check if character exists
-			if root.Children()[word[charNumber]-FIRST_PRINTABLE_ASCII] != nil {
-				return c.checkWord(root.Children()[word[charNumber]-FIRST_PRINTABLE_ASCII], word, charNumber+1)
-			}
-
-			return false
 		}
-	} else {
+
+		// Check if character exists
+		if root.Children()[word[charNumber]-firstPrintableASCII] != nil {
+			return c.checkWord(root.Children()[word[charNumber]-firstPrintableASCII], word, charNumber+1)
+		}
+
 		return false
+
 	}
+
+	return false
 }
 
-// Print spelling errors.
+// PrintSpellingErrors prints strings in Checker's spellingErrors list.
 func (c *Checker) PrintSpellingErrors() {
 	for _, spellingError := range c.spellingErrors {
 		fmt.Println(spellingError)

@@ -74,9 +74,9 @@ func parse() (string, string) {
 
 	// If no path is specified
 	if file == "" {
-		log.Fatal(errors.New("no file specified."))
+		log.Fatal(errors.New("no file specified"))
 	} else if dictionary == "" {
-		log.Fatal(errors.New("no dictionary file specified."))
+		log.Fatal(errors.New("no dictionary file specified"))
 	}
 
 	return file, dictionary

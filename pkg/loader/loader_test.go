@@ -47,7 +47,7 @@ func isWordLoaded(root *Node, word string, whichChar int) bool {
 		return root.isWord
 	}
 
-	return isWordLoaded(root.children[word[whichChar]-FIRST_PRINTABLE_ASCII], word, whichChar+1)
+	return isWordLoaded(root.children[word[whichChar]-firstPrintableASCII], word, whichChar+1)
 }
 
 // Benchmark dictionary loading.

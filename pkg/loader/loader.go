@@ -10,29 +10,29 @@ import (
 )
 
 const (
-	PRINTABLE_ASCII       = 95
-	FIRST_PRINTABLE_ASCII = 32
+	printableASCII      = 95
+	firstPrintableASCII = 32
 )
 
-// A trie node.
+// Node represents a node in a trie.
 type Node struct {
-	children [PRINTABLE_ASCII]*Node // Children nodes
-	isWord   bool                   // True if node marks a word ending, false otherwise
+	children [printableASCII]*Node // Children nodes
+	isWord   bool                  // True if node marks a word ending, false otherwise
 }
 
-// Return an array of children nodes.
-func (n *Node) Children() [PRINTABLE_ASCII]*Node {
+// Children returns an array of children of a Node.
+func (n *Node) Children() [printableASCII]*Node {
 	return n.children
 }
 
-// Returns true if node marks a word
+// IsWord returns true if node marks a word
 // ending, false otherwise.
 func (n *Node) IsWord() bool {
 	return n.isWord
 }
 
-// Load a dictionay of words into a trie.
-// Return a pointer to trie's head node.
+// LoadDictionary loads a dictionay of words into a trie,
+// and returns a pointer to trie's head Node.
 func LoadDictionary(path string) *Node {
 	// Open dictionary file
 	file, err := os.Open(path)
@@ -69,13 +69,13 @@ func loadWord(root *Node, word string, charNumber int) *Node {
 	}
 
 	// If Node is not initialized
-	if root.children[word[charNumber]-FIRST_PRINTABLE_ASCII] == nil {
-		root.children[word[charNumber]-FIRST_PRINTABLE_ASCII] = new(Node)
+	if root.children[word[charNumber]-firstPrintableASCII] == nil {
+		root.children[word[charNumber]-firstPrintableASCII] = new(Node)
 	}
 
 	// If character is printable ASCII
 	if word[charNumber] >= 32 && word[charNumber] <= unicode.MaxASCII {
-		root.children[word[charNumber]-FIRST_PRINTABLE_ASCII] = loadWord(root.children[word[charNumber]-FIRST_PRINTABLE_ASCII], word, charNumber+1)
+		root.children[word[charNumber]-firstPrintableASCII] = loadWord(root.children[word[charNumber]-firstPrintableASCII], word, charNumber+1)
 	}
 
 	return root
