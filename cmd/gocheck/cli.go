@@ -1,6 +1,6 @@
-// Package cli handles parsing of command line
-// arguments and flags.
-package cli
+// Package main initializes application, calls other packages,
+// and handles parsing of command line arguments, and flags.
+package main
 
 import (
 	"errors"
@@ -12,9 +12,9 @@ import (
 	"github.com/sudo-sturbia/gocheck/pkg/checker"
 )
 
-// Parse command line arguments and flags.
+// parse command line arguments and flags.
 // Return paths to file to verify and dictionary.
-func Parse() (string, string) {
+func parse() (string, string) {
 	// Ignore uppercase flag
 	uString := "ignore uppercase letters. " +
 		"By default a word that contains\nan uppercase letter any where but the start is considered\nwrong," +

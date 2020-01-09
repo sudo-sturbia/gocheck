@@ -1,9 +1,9 @@
-// Package main initializes application and calls other packages.
+// Package main initializes application, calls other packages,
+// and handles parsing of command line arguments, and flags.
 package main
 
 import (
 	"github.com/sudo-sturbia/gocheck/pkg/checker"
-	"github.com/sudo-sturbia/gocheck/pkg/cli"
 	"github.com/sudo-sturbia/gocheck/pkg/loader"
 )
 
@@ -12,7 +12,7 @@ func main() {
 	spellChecker := checker.Instance()
 
 	// Get paths
-	filePath, dictionaryPath := cli.Parse()
+	filePath, dictionaryPath := parse()
 
 	dictionary := loader.LoadDictionary(dictionaryPath)
 
