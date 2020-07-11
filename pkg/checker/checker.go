@@ -14,11 +14,6 @@ import (
 	"github.com/sudo-sturbia/gocheck/pkg/loader"
 )
 
-const (
-	printableASCII      = 95
-	firstPrintableASCII = 32
-)
-
 // Concurrency related variables.
 var (
 	mux sync.Mutex
@@ -123,7 +118,7 @@ func (c *Checker) checkLine(root *loader.Node, textLine string, lineNumber int, 
 				word = strings.ToLower(word)
 			}
 
-			if !c.checkWord(root, word, 0) {
+			if !c.CheckWord(root, word, 0) {
 				// Add formatted error to list
 				spellingErrorsInLine = append(spellingErrorsInLine, fmt.Sprintf("At (%d, %d)  \"%s\"", lineNumber, i, word))
 				hasErrors = true
@@ -141,7 +136,7 @@ func (c *Checker) checkLine(root *loader.Node, textLine string, lineNumber int, 
 
 // Return true if a word exists in the trie,
 // return false otherwise.
-func (c *Checker) checkWord(root *loader.Node, word string, charNumber int) bool {
+func (c *Checker) CheckWord(root *loader.Node, word string, charNumber int) bool {
 
 	if charNumber == len(word) {
 		return root.IsWord()
@@ -155,7 +150,7 @@ func (c *Checker) checkWord(root *loader.Node, word string, charNumber int) bool
 			if charNumber == 0 {
 				// Pass character as uppercase
 				if root.Children()[word[charNumber]] != nil {
-					return c.checkWord(root.Children()[word[charNumber]], word, charNumber+1)
+					return c.CheckWord(root.Children()[word[charNumber]], word, charNumber+1)
 				}
 			}
 
@@ -163,8 +158,8 @@ func (c *Checker) checkWord(root *loader.Node, word string, charNumber int) bool
 		}
 
 		// Check if character exists
-		if root.Children()[word[charNumber]-firstPrintableASCII] != nil {
-			return c.checkWord(root.Children()[word[charNumber]-firstPrintableASCII], word, charNumber+1)
+		if root.Children()[word[charNumber]-loader.FirstPrintableASCII] != nil {
+			return c.CheckWord(root.Children()[word[charNumber]-loader.FirstPrintableASCII], word, charNumber+1)
 		}
 
 		return false

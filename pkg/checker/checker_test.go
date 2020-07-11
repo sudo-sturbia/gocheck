@@ -14,14 +14,14 @@ var root *loader.Node
 
 // Setup dictionary before testing.
 func TestMain(m *testing.M) {
-	root = loader.LoadDictionary(os.Getenv("GOPATH") + "/src/github.com/sudo-sturbia/gocheck/test/test_words.txt")
+	root = loader.LoadDictionary("../../test/test_words.txt")
 	os.Exit(m.Run())
 }
 
 // Test check file function on a file without errors.
 func TestCheckFileWithoutErrors(t *testing.T) {
 	testChecker := New()
-	testChecker.CheckFile(root, os.Getenv("GOPATH")+"/src/github.com/sudo-sturbia/gocheck/test/paragraph.txt")
+	testChecker.CheckFile(root, "../../test/paragraph.txt")
 
 	if len(testChecker.spellingErrors) != 0 {
 		t.Errorf("Number of spelling errors incorrect, expected: 0, got: %d", len(testChecker.spellingErrors))
@@ -31,7 +31,7 @@ func TestCheckFileWithoutErrors(t *testing.T) {
 // Test check file function on a file with errors.
 func TestCheckFileWithErrors(t *testing.T) {
 	testChecker := New()
-	testChecker.CheckFile(root, os.Getenv("GOPATH")+"/src/github.com/sudo-sturbia/gocheck/test/paragraph-wrong.txt")
+	testChecker.CheckFile(root, "../../test/paragraph-wrong.txt")
 
 	if len(testChecker.spellingErrors) != 8 {
 		t.Errorf("Number of spelling errors incorrect, expected: 8, got: %d", len(testChecker.spellingErrors))
@@ -62,6 +62,6 @@ func TestCheckFileWithErrors(t *testing.T) {
 func BenchmarkWordProcessing(b *testing.B) {
 	testChecker := New()
 	for n := 0; n < b.N; n++ {
-		testChecker.CheckFile(root, os.Getenv("GOPATH")+"/src/github.com/sudo-sturbia/gocheck/test/paragraph.txt")
+		testChecker.CheckFile(root, "../../test/paragraph.txt")
 	}
 }
