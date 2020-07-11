@@ -3,14 +3,13 @@
 package loader
 
 import (
-	"os"
 	"testing"
 )
 
 // Test loading of one word.
 func TestWordLoading(t *testing.T) {
 	root := new(Node)
-	loadWord(root, "word", 0)
+	LoadWord(root, "word", 0)
 
 	if !isWordLoaded(root, "word", 0) {
 		t.Errorf("Word \"word\" was not loaded.\n")
@@ -19,7 +18,7 @@ func TestWordLoading(t *testing.T) {
 
 // Test dictionary loading.
 func TestDictionaryLoading(t *testing.T) {
-	root := LoadDictionary(os.Getenv("GOPATH") + "/src/github.com/sudo-sturbia/gocheck/test/test_load.txt")
+	root := LoadDictionary("../../test/test_load.txt")
 
 	// Test loaded words
 	words := []string{
@@ -47,12 +46,12 @@ func isWordLoaded(root *Node, word string, whichChar int) bool {
 		return root.isWord
 	}
 
-	return isWordLoaded(root.children[word[whichChar]-firstPrintableASCII], word, whichChar+1)
+	return isWordLoaded(root.children[word[whichChar]-FirstPrintableASCII], word, whichChar+1)
 }
 
 // Benchmark dictionary loading.
 func BenchmarkDictionaryLoading(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		LoadDictionary(os.Getenv("GOPATH") + "/src/github.com/sudo-sturbia/gocheck/test/test_words.txt")
+		LoadDictionary("../../test/test_words.txt")
 	}
 }

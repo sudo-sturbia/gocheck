@@ -9,19 +9,20 @@ import (
 	"unicode"
 )
 
+// Number of printable ASCII characters and their starting position.
 const (
-	printableASCII      = 95
-	firstPrintableASCII = 32
+	PrintableASCII      = 95
+	FirstPrintableASCII = 32
 )
 
 // Node represents a node in a trie.
 type Node struct {
-	children [printableASCII]*Node // Children nodes
+	children [PrintableASCII]*Node // Children nodes
 	isWord   bool                  // True if node marks a word ending, false otherwise
 }
 
 // Children returns an array of children of a Node.
-func (n *Node) Children() [printableASCII]*Node {
+func (n *Node) Children() [PrintableASCII]*Node {
 	return n.children
 }
 
@@ -49,7 +50,7 @@ func LoadDictionary(path string) *Node {
 	for fileScanner.Scan() {
 		word := fileScanner.Text()
 
-		root = loadWord(root, word, 0)
+		root = LoadWord(root, word, 0)
 	}
 
 	if err := fileScanner.Err(); err != nil {
@@ -59,9 +60,8 @@ func LoadDictionary(path string) *Node {
 	return root
 }
 
-// Load a word into trie.
-// Return a pointer to trie's head node.
-func loadWord(root *Node, word string, charNumber int) *Node {
+// Load a word into trie. Return a pointer to trie's head node.
+func LoadWord(root *Node, word string, charNumber int) *Node {
 	// If end of word
 	if charNumber == len(word) {
 		root.isWord = true
@@ -69,13 +69,13 @@ func loadWord(root *Node, word string, charNumber int) *Node {
 	}
 
 	// If Node is not initialized
-	if root.children[word[charNumber]-firstPrintableASCII] == nil {
-		root.children[word[charNumber]-firstPrintableASCII] = new(Node)
+	if root.children[word[charNumber]-FirstPrintableASCII] == nil {
+		root.children[word[charNumber]-FirstPrintableASCII] = new(Node)
 	}
 
 	// If character is printable ASCII
 	if word[charNumber] >= 32 && word[charNumber] <= unicode.MaxASCII {
-		root.children[word[charNumber]-firstPrintableASCII] = loadWord(root.children[word[charNumber]-firstPrintableASCII], word, charNumber+1)
+		root.children[word[charNumber]-FirstPrintableASCII] = LoadWord(root.children[word[charNumber]-FirstPrintableASCII], word, charNumber+1)
 	}
 
 	return root
