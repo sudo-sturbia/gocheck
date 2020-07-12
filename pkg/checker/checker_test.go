@@ -14,7 +14,7 @@ var root *loader.Node
 
 // Setup dictionary before testing.
 func TestMain(m *testing.M) {
-	root = loader.LoadDictionary("../../test/test_words.txt")
+	root = loader.LoadDictionary("../../test/test-words.txt")
 	os.Exit(m.Run())
 }
 
@@ -23,18 +23,18 @@ func TestCheckFileWithoutErrors(t *testing.T) {
 	testChecker := New()
 	testChecker.CheckFile(root, "../../test/paragraph.txt")
 
-	if len(testChecker.spellingErrors) != 0 {
-		t.Errorf("Number of spelling errors incorrect, expected: 0, got: %d", len(testChecker.spellingErrors))
+	if len(testChecker.errors) != 0 {
+		t.Errorf("Number of spelling errors incorrect, expected: 0, got: %d", len(testChecker.errors))
 	}
 }
 
 // Test check file function on a file with errors.
 func TestCheckFileWithErrors(t *testing.T) {
 	testChecker := New()
-	testChecker.CheckFile(root, "../../test/paragraph-wrong.txt")
+	testChecker.CheckFile(root, "../../test/wrong-paragraph.txt")
 
-	if len(testChecker.spellingErrors) != 8 {
-		t.Errorf("Number of spelling errors incorrect, expected: 8, got: %d", len(testChecker.spellingErrors))
+	if len(testChecker.errors) != 8 {
+		t.Errorf("Number of spelling errors incorrect, expected: 8, got: %d", len(testChecker.errors))
 	}
 
 	// Assert errors found in file
@@ -51,8 +51,8 @@ func TestCheckFileWithErrors(t *testing.T) {
 	errorMap["At (3, 9)  \"rmation\""] = true
 
 	for i := 0; i < 8; i++ {
-		if !errorMap[testChecker.spellingErrors[i]] {
-			t.Errorf("Found incorrect error: %s", testChecker.spellingErrors[i])
+		if !errorMap[testChecker.errors[i]] {
+			t.Errorf("Found incorrect error: %s", testChecker.errors[i])
 		}
 	}
 

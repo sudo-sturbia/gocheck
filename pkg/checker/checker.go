@@ -23,40 +23,29 @@ var (
 // Checker holds data related to
 // spelling errors and verification.
 type Checker struct {
-	spellingErrors []string // A list of spelling errors
-
-	ignoredWords    map[string]bool // A map of words to ignore
+	errors          []string        // List of spelling errors
+	ignored         map[string]bool // Map of words to ignore
 	ignoreUppercase bool            // Consider all given words to be lowercase
 }
 
 // New returns pointer to a new, initialized Checker object.
 func New() *Checker {
 	instance := new(Checker)
-	instance.ignoredWords = make(map[string]bool)
+	instance.ignored = make(map[string]bool)
 
 	return instance
 }
 
-// AddWordToIgnored adds a word to the ignored words list.
-func (c *Checker) AddWordToIgnored(word string) {
-	c.ignoredWords[word] = true
+// Ignore adds a word to the ignored words list.
+func (c *Checker) Ignore(word string) {
+	c.ignored[word] = true
 }
 
-// AddListToIgnored adds a given list of words to ignored words.
-func (c *Checker) AddListToIgnored(words []string) {
+// IgnoreList adds a given list of words to ignored words.
+func (c *Checker) IgnoreList(words []string) {
 	for _, word := range words {
-		c.ignoredWords[word] = true
+		c.ignored[word] = true
 	}
-}
-
-// IgnoredString returns a string containing all ignored words.
-func (c *Checker) IgnoredString() string {
-	var stringForm string
-	for key := range c.ignoredWords {
-		stringForm += fmt.Sprintf("%s ", key)
-	}
-
-	return stringForm
 }
 
 // SetIgnoreUppercase sets Checker's ignoreUppercase flag.
@@ -65,13 +54,10 @@ func (c *Checker) SetIgnoreUppercase(ignore bool) {
 }
 
 // CheckFile checks file for spelling errors and populates
-// Checker's spellingErrors list.
+// Checker's errors list.
 func (c *Checker) CheckFile(root *loader.Node, path string) {
-	c.spellingErrors = make([]string, 0)
-
 	// Open file
 	file, err := os.Open(path)
-
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -107,20 +93,20 @@ func (c *Checker) CheckFile(root *loader.Node, path string) {
 func (c *Checker) checkLine(root *loader.Node, textLine string, lineNumber int, wordEnd func(c rune) bool) {
 	defer wg.Done()
 
-	spellingErrorsInLine := make([]string, 0)
+	lineErrors := make([]string, 0)
 	words := strings.FieldsFunc(textLine, wordEnd)
 
 	hasErrors := false
 
 	for i, word := range words {
-		if !c.ignoredWords[word] {
+		if !c.ignored[word] {
 			if c.ignoreUppercase {
 				word = strings.ToLower(word)
 			}
 
 			if !c.CheckWord(root, word, 0) {
 				// Add formatted error to list
-				spellingErrorsInLine = append(spellingErrorsInLine, fmt.Sprintf("At (%d, %d)  \"%s\"", lineNumber, i, word))
+				lineErrors = append(lineErrors, fmt.Sprintf("At (%d, %d)  \"%s\"", lineNumber, i, word))
 				hasErrors = true
 			}
 		}
@@ -129,7 +115,7 @@ func (c *Checker) checkLine(root *loader.Node, textLine string, lineNumber int, 
 	// Add line's errors to errors slice
 	if hasErrors {
 		mux.Lock()
-		c.spellingErrors = append(c.spellingErrors, spellingErrorsInLine...)
+		c.errors = append(c.errors, lineErrors...)
 		mux.Unlock()
 	}
 }
@@ -171,9 +157,9 @@ func (c *Checker) CheckWord(root *loader.Node, word string, charNumber int) bool
 
 // PrintSpellingErrors prints strings in Checker's spellingErrors list.
 func (c *Checker) PrintSpellingErrors() {
-	for _, spellingError := range c.spellingErrors {
+	for _, spellingError := range c.errors {
 		fmt.Println(spellingError)
 	}
 
-	fmt.Printf("- Found a total of %d errors.\n", len(c.spellingErrors))
+	fmt.Printf("- Found a total of %d errors.\n", len(c.errors))
 }
