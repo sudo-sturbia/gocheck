@@ -50,7 +50,7 @@ func (c *Checker) IgnoreList(words []string) {
 
 // SetIgnoreUppercase sets Checker's ignoreUppercase flag.
 func (c *Checker) SetIgnoreUppercase(ignore bool) {
-	c.ignoreUppercase = true
+	c.ignoreUppercase = ignore
 }
 
 // CheckFile checks file for spelling errors and populates
