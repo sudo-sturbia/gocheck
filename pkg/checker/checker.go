@@ -1,5 +1,5 @@
-// Package checker implements functions used to find spelling errors
-// in a given text file and print error messages accordingly.
+// Package checker implements a simple spell-checker used to find
+// spelling errors in a given text file and print error messages accordingly.
 package checker
 
 import (
@@ -20,8 +20,7 @@ var (
 	wg  sync.WaitGroup
 )
 
-// Checker holds data related to
-// spelling errors and verification.
+// Checker is used to find spelling errors, and print error messages.
 type Checker struct {
 	errors          []string        // List of spelling errors
 	ignored         map[string]bool // Map of words to ignore
@@ -36,7 +35,18 @@ func New() *Checker {
 	return instance
 }
 
-// Ignore adds a word to the ignored words list.
+// Clear clears Checker's list of spelling errors. If ignored is true
+// Checker's list of ignored strings is also cleared.
+func (c *Checker) Clear(ignored bool) {
+	c.errors = nil
+	if ignored {
+		for i := range c.ignored {
+			delete(c.ignored, i)
+		}
+	}
+}
+
+// Ignore adds a word to ignored words.
 func (c *Checker) Ignore(word string) {
 	c.ignored[word] = true
 }
@@ -48,13 +58,15 @@ func (c *Checker) IgnoreList(words []string) {
 	}
 }
 
-// SetIgnoreUppercase sets Checker's ignoreUppercase flag.
+// SetIgnoreUppercase sets Checker's ignoreUppercase flag. By default
+// a word with an uppercase letter anywhere but the start is considered
+// wrong. When ignoreUppercase is true, this behaviour is disabled.
 func (c *Checker) SetIgnoreUppercase(ignore bool) {
 	c.ignoreUppercase = ignore
 }
 
-// CheckFile checks file for spelling errors and populates
-// Checker's errors list.
+// CheckFile checks the file at given path for spelling errors using a
+// given dictionary, and populates Checker's errors list.
 func (c *Checker) CheckFile(root *loader.Node, path string) {
 	// Open file
 	file, err := os.Open(path)
@@ -87,9 +99,7 @@ func (c *Checker) CheckFile(root *loader.Node, path string) {
 	wg.Wait()
 }
 
-// Finds spelling errors in a line (string) of words.
-// Adds found errors to errors array.
-// Spelling errors are formatted as --- At (row, word)  "Error".
+// checkLine finds spelling errors in a line (string) of words.
 func (c *Checker) checkLine(root *loader.Node, textLine string, lineNumber int, wordEnd func(c rune) bool) {
 	defer wg.Done()
 
@@ -104,7 +114,7 @@ func (c *Checker) checkLine(root *loader.Node, textLine string, lineNumber int, 
 				word = strings.ToLower(word)
 			}
 
-			if !c.CheckWord(root, word, 0) {
+			if !CheckWord(root, word) {
 				// Add formatted error to list
 				lineErrors = append(lineErrors, fmt.Sprintf("At (%d, %d)  \"%s\"", lineNumber, i, word))
 				hasErrors = true
@@ -120,10 +130,14 @@ func (c *Checker) checkLine(root *loader.Node, textLine string, lineNumber int, 
 	}
 }
 
-// Return true if a word exists in the trie,
-// return false otherwise.
-func (c *Checker) CheckWord(root *loader.Node, word string, charNumber int) bool {
+// CheckWord returns true if a word exists in the given trie,
+// false otherwise.
+func CheckWord(root *loader.Node, word string) bool {
+	return recCheck(root, word, 0)
+}
 
+// recCheck, recursively, verifies that a word exists in the given trie.
+func recCheck(root *loader.Node, word string, charNumber int) bool {
 	if charNumber == len(word) {
 		return root.IsWord()
 	}
@@ -136,7 +150,7 @@ func (c *Checker) CheckWord(root *loader.Node, word string, charNumber int) bool
 			if charNumber == 0 {
 				// Pass character as uppercase
 				if root.Children()[word[charNumber]] != nil {
-					return c.CheckWord(root.Children()[word[charNumber]], word, charNumber+1)
+					return recCheck(root.Children()[word[charNumber]], word, charNumber+1)
 				}
 			}
 
@@ -145,7 +159,7 @@ func (c *Checker) CheckWord(root *loader.Node, word string, charNumber int) bool
 
 		// Check if character exists
 		if root.Children()[word[charNumber]-loader.FirstPrintableASCII] != nil {
-			return c.CheckWord(root.Children()[word[charNumber]-loader.FirstPrintableASCII], word, charNumber+1)
+			return recCheck(root.Children()[word[charNumber]-loader.FirstPrintableASCII], word, charNumber+1)
 		}
 
 		return false
@@ -155,7 +169,8 @@ func (c *Checker) CheckWord(root *loader.Node, word string, charNumber int) bool
 	return false
 }
 
-// PrintSpellingErrors prints strings in Checker's spellingErrors list.
+// PrintSpellingErrors a list of spelling errors. Errors are formatted
+// as -- At (lineNumber, wordNumber)  "Error"
 func (c *Checker) PrintSpellingErrors() {
 	for _, spellingError := range c.errors {
 		fmt.Println(spellingError)

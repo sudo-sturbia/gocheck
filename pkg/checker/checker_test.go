@@ -1,24 +1,72 @@
-// Package checker implements functions used to find spelling errors
-// in a given text file and print error messages accordingly.
 package checker
 
 import (
-	"os"
 	"testing"
 
 	"github.com/sudo-sturbia/gocheck/pkg/loader"
 )
 
-// Root Node of loaded dictionary.
-var root *loader.Node
+// Root of used trie.
+var root = loader.LoadList([]string{
+	"that",
+	"was",
+	"a",
+	"memorable",
+	"day",
+	"to",
+	"me",
+	"for",
+	"it",
+	"made",
+	"great",
+	"changes",
+	"in",
+	"but",
+	"is",
+	"the",
+	"same",
+	"with",
+	"any",
+	"life",
+	"imagine",
+	"one",
+	"selected",
+	"struck",
+	"out",
+	"of",
+	"and",
+	"think",
+	"how",
+	"different",
+	"its",
+	"course",
+	"would",
+	"have",
+	"been",
+	"pause",
+	"you",
+	"who",
+	"read",
+	"this",
+	"moment",
+	"long",
+	"chain",
+	"iron",
+	"or",
+	"gold",
+	"thorns",
+	"flowers",
+	"that",
+	"never",
+	"bound",
+	"but",
+	"formation",
+	"first",
+	"link",
+	"on",
+})
 
-// Setup dictionary before testing.
-func TestMain(m *testing.M) {
-	root = loader.LoadDictionary("../../test/test-words.txt")
-	os.Exit(m.Run())
-}
-
-// Test check file function on a file without errors.
+// Test file checking on a file without errors.
 func TestCheckFileWithoutErrors(t *testing.T) {
 	testChecker := New()
 	testChecker.CheckFile(root, "../../test/paragraph.txt")
@@ -28,7 +76,7 @@ func TestCheckFileWithoutErrors(t *testing.T) {
 	}
 }
 
-// Test check file function on a file with errors.
+// Test file checking on a file with errors.
 func TestCheckFileWithErrors(t *testing.T) {
 	testChecker := New()
 	testChecker.CheckFile(root, "../../test/wrong-paragraph.txt")
@@ -55,7 +103,71 @@ func TestCheckFileWithErrors(t *testing.T) {
 			t.Errorf("Found incorrect error: %s", testChecker.errors[i])
 		}
 	}
+}
 
+// Test word checking using correct words.
+func TestCheckWordExists(t *testing.T) {
+	words := []string{
+		"that",
+		"was",
+		"a",
+		"memorable",
+		"day",
+		"to",
+		"me",
+		"for",
+		"it",
+		"made",
+		"great",
+		"changes",
+		"in",
+		"but",
+		"is",
+		"the",
+		"same",
+		"with",
+		"any",
+		"life",
+		"imagine",
+		"one",
+		"selected",
+	}
+
+	for _, word := range words {
+		if !CheckWord(root, word) {
+			t.Errorf("\"%s\" should exist, but doesn't.", word)
+		}
+	}
+}
+
+// Test word checking using incorrect words.
+func TestCheckWordDoesntExist(t *testing.T) {
+	words := []string{
+		"df",
+		"ad",
+		"thhhink",
+		"howsds",
+		"ifferent",
+		"ts",
+		"curse",
+		"iwould",
+		"hve",
+		"beeen",
+		"pse",
+		"yu",
+		"wh^o",
+		"$$$",
+		"\\",
+		"monet",
+		"lll",
+		"chan",
+	}
+
+	for _, word := range words {
+		if CheckWord(root, word) {
+			t.Errorf("\"%s\" shouldn't exist, but does.", word)
+		}
+	}
 }
 
 // Benchmark processing time.
