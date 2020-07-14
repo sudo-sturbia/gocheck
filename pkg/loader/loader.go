@@ -1,5 +1,5 @@
-// Package loader implements functions for loading words
-// from a file into a trie to be used as a dictionary.
+// Package loader implements functions for loading strings into a trie
+// to be used as a dictionary.
 package loader
 
 import (
@@ -26,15 +26,14 @@ func (n *Node) Children() [PrintableASCII]*Node {
 	return n.children
 }
 
-// IsWord returns true if node marks a word
-// ending, false otherwise.
+// IsWord returns true if node marks a word ending, false otherwise.
 func (n *Node) IsWord() bool {
 	return n.isWord
 }
 
-// LoadDictionary loads a dictionay of words into a trie,
-// and returns a pointer to trie's head Node.
-func LoadDictionary(path string) *Node {
+// LoadFile creates a new trie using words from text file at the
+// given path. Returns a pointer to trie's root.
+func LoadFile(path string) *Node {
 	// Open dictionary file
 	file, err := os.Open(path)
 
@@ -50,7 +49,7 @@ func LoadDictionary(path string) *Node {
 	for fileScanner.Scan() {
 		word := fileScanner.Text()
 
-		root = LoadWord(root, word, 0)
+		root = LoadWord(root, word)
 	}
 
 	if err := fileScanner.Err(); err != nil {
@@ -60,22 +59,39 @@ func LoadDictionary(path string) *Node {
 	return root
 }
 
-// Load a word into trie. Return a pointer to trie's head node.
-func LoadWord(root *Node, word string, charNumber int) *Node {
+// LoadList creates a new trie using given string list. Returns a pointer
+// to trie's root node.
+func LoadList(list []string) *Node {
+	root := new(Node)
+	for _, word := range list {
+		root = LoadWord(root, word)
+	}
+
+	return root
+}
+
+// LoadWord loads a word into trie. Returns a pointer to trie's root
+// node.
+func LoadWord(root *Node, word string) *Node {
+	return recLoad(root, word, 0)
+}
+
+// recLoad loads a word into a trie recursively.
+func recLoad(root *Node, word string, whichChar int) *Node {
 	// If end of word
-	if charNumber == len(word) {
+	if whichChar == len(word) {
 		root.isWord = true
 		return root
 	}
 
 	// If Node is not initialized
-	if root.children[word[charNumber]-FirstPrintableASCII] == nil {
-		root.children[word[charNumber]-FirstPrintableASCII] = new(Node)
+	if root.children[word[whichChar]-FirstPrintableASCII] == nil {
+		root.children[word[whichChar]-FirstPrintableASCII] = new(Node)
 	}
 
 	// If character is printable ASCII
-	if word[charNumber] >= 32 && word[charNumber] <= unicode.MaxASCII {
-		root.children[word[charNumber]-FirstPrintableASCII] = LoadWord(root.children[word[charNumber]-FirstPrintableASCII], word, charNumber+1)
+	if word[whichChar] >= 32 && word[whichChar] <= unicode.MaxASCII {
+		root.children[word[whichChar]-FirstPrintableASCII] = recLoad(root.children[word[whichChar]-FirstPrintableASCII], word, whichChar+1)
 	}
 
 	return root
