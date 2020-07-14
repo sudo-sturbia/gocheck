@@ -12,38 +12,34 @@ go get github.com/sudo-sturbia/gocheck/cmd/gocheck
 
 ```console
 gocheck is a simple, fast spell-checker.
-It works by comparing a file against a given list of words and printing errors.
+It works by comparing a file against a given list of words and prints
+spelling errors accordingly.
 
 Usage
+    gocheck [options] <filepath> <dictionarypath>
 
-    gocheck [OPTIONS] <FILEPATH> <DICTIONARYPATH>
+Required Arguments
+    <filepath>        Path to a text file to spellcheck.
+    <dictionarypath>  Path to a text file containing a list of words, one word per
+                      line, to spellcheck against.
 
-Required arguments:
+Options
+    -h              Print a short help message.
+    -help           Print a detailed help message.
+    -ignore <word>  Ignore given word (consider it correct.)
+    -ignore-upper   By default a word that contains an uppercase letter any where
+                    but the start is considered wrong. When this flag is used, this
+                    behaviour is disabled.
 
-    <FILEPATH>        Path to a text file that should be processed to find errors.
-    <DICTIONARYPATH>  Path to a text file containing a list of words, one word per
-                      line, to compare the other file against.
-
-Options:
-
-    -h --help         Print this help message.
-
-    -i --ignore WORD  Ignore specified word (WORD is considered correct.) This
-                      flag can be used an unlimited amount of times.
-
-    -u --uppercase    Ignore uppercase letters. By default a word that contains
-                      an uppercase letter any where but the start is considered
-                      wrong, when this flag is used, this feature is disabled.
-
-For the source code check the github page [github.com/sudo-sturbia/gocheck]
+For the source code see [github.com/sudo-sturbia/gocheck]
 ```
 
 ### Example
 
-Using files in test/ directory
+Using files in `test/` directory
 
 ```
-gocheck test/paragraph-wrong.txt test/test_words.txt
+gocheck test/wrong-paragraph.txt test/test-words.txt
 ```
 
 Output
@@ -63,13 +59,17 @@ At (0, 9)  "mde"
 A comprehensive dictionary can be downloaded from [english-words](https://github.com/dwyl/english-words).
 
 ## How It Works
-gocheck works by comparing a given file against another containing a list of words.
+gocheck compares a given text file against another containing a list of
+words. Incorrect words are collected, and an error message formatted as
+```
+At (%LineNumber, %WordNumber) "incorrectWord"
+.
+.
+- Found a total of N errors.
+```
+is printed.
 
-Incorrect words are collected and error messages are printed accordingly.
-Error messages are formatted as `At (%lineNumber, %wordNumber) "Word"`.
+gocheck optimizes perfomance by using
 
-gocheck is optimized for performance:
-
-- a trie data structure is used to load dictionary.
-- goroutines are used to process input files.
-
+- Trie data structure for dictionary loading/querying,
+- Goroutines to process input files.
