@@ -1,0 +1,51 @@
+name: Test Suite and Benchmarks
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-20.04
+    steps:
+
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.14
+      id: go
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Get dependencies
+      run: |
+        go get -v -t -d ./...
+        if [ -f Gopkg.toml ]; then
+            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+            dep ensure
+        fi
+
+    - name: Build pkg/checker
+      run: go build -v .
+      working-directory: pkg/checker
+
+    - name: Build pkg/loader
+      run: go build -v .
+      working-directory: pkg/loader
+
+    - name: Build cmd/gocheck
+      run: go build -v .
+      working-directory: cmd/gocheck
+
+    - name: Test and Benchmark pkg/checker
+      run: go test -v -bench=. .
+      working-directory: pkg/checker
+
+    - name: Test and Benchmark pkg/loader
+      run: go test -v -bench=. .
+      working-directory: pkg/loader
