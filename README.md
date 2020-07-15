@@ -40,10 +40,10 @@ For the source code check the github page [github.com/sudo-sturbia/gocheck]
 
 ### Example
 
-Using files in test/ directory
+Using files in test-data/ directory
 
 ```
-gocheck test/paragraph-wrong.txt test/test_words.txt
+gocheck test-data/wrong-paragraph.txt test-data/test-words.txt
 ```
 
 Output
