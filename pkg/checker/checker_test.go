@@ -69,7 +69,7 @@ var root = loader.LoadList([]string{
 // Test file checking on a file without errors.
 func TestCheckFileWithoutErrors(t *testing.T) {
 	testChecker := New()
-	testChecker.CheckFile(root, "../../test/paragraph.txt")
+	testChecker.CheckFile(root, "../../test-data/paragraph.txt")
 
 	if len(testChecker.errors) != 0 {
 		t.Errorf("Number of spelling errors incorrect, expected: 0, got: %d", len(testChecker.errors))
@@ -79,7 +79,7 @@ func TestCheckFileWithoutErrors(t *testing.T) {
 // Test file checking on a file with errors.
 func TestCheckFileWithErrors(t *testing.T) {
 	testChecker := New()
-	testChecker.CheckFile(root, "../../test/wrong-paragraph.txt")
+	testChecker.CheckFile(root, "../../test-data/wrong-paragraph.txt")
 
 	if len(testChecker.errors) != 8 {
 		t.Errorf("Number of spelling errors incorrect, expected: 8, got: %d", len(testChecker.errors))
@@ -174,6 +174,6 @@ func TestCheckWordDoesntExist(t *testing.T) {
 func BenchmarkWordProcessing(b *testing.B) {
 	testChecker := New()
 	for n := 0; n < b.N; n++ {
-		testChecker.CheckFile(root, "../../test/paragraph.txt")
+		testChecker.CheckFile(root, "../../test-data/paragraph.txt")
 	}
 }

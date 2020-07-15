@@ -16,7 +16,7 @@ func TestWordLoading(t *testing.T) {
 
 // Test loading from a file.
 func TestLoadingFromFile(t *testing.T) {
-	root := LoadFile("../../test/test-load.txt")
+	root := LoadFile("../../test-data/test-load.txt")
 
 	// Test loaded words
 	words := []string{
@@ -72,7 +72,7 @@ func isWordLoaded(root *Node, word string, whichChar int) bool {
 // Benchmark loading from a file.
 func BenchmarkLoadingFromFile(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		LoadFile("../../test/test-words.txt")
+		LoadFile("../../test-data/test-words.txt")
 	}
 }
 
