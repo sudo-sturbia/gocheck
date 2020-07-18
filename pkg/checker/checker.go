@@ -47,6 +47,15 @@ func (c *Checker) IgnoreList(words []string) {
 	}
 }
 
+// ClearIgnored clears Checker's ignored words list.
+func (c *Checker) ClearIgnored(ignored bool) {
+	if ignored {
+		for i := range c.ignored {
+			delete(c.ignored, i)
+		}
+	}
+}
+
 // SetIgnoreUppercase sets Checker's ignoreUppercase flag. By default
 // a word with an uppercase letter anywhere but the start is considered
 // wrong. When ignoreUppercase is true, this behaviour is disabled.
