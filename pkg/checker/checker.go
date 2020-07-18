@@ -1,30 +1,30 @@
 // Package checker implements a simple spell-checker used to find
-// spelling errors in a given text file and print error messages accordingly.
+// spelling errors.
 package checker
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"os"
 	"strings"
-	"sync"
 	"unicode"
 
 	"github.com/sudo-sturbia/gocheck/pkg/loader"
 )
 
-// Concurrency related variables.
-var (
-	mux sync.Mutex
-	wg  sync.WaitGroup
-)
-
-// Checker is used to find spelling errors, and print error messages.
+// Checker is used to find spelling errors. Checker implements
+// several options when spell-checking such as ignored words, and
+// words with uppercase letters.
 type Checker struct {
-	errors          []string        // List of spelling errors
 	ignored         map[string]bool // Map of words to ignore
 	ignoreUppercase bool            // Consider all given words to be lowercase
+}
+
+// SpellingError represents a spelling error found in a text file.
+type SpellingError struct {
+	Word string // Incorrectly spelled word.
+	Row  int    // Row containing the word.
+	Col  int    // Column containing the word.
 }
 
 // New returns pointer to a new, initialized Checker object.
@@ -33,17 +33,6 @@ func New() *Checker {
 	instance.ignored = make(map[string]bool)
 
 	return instance
-}
-
-// Clear clears Checker's list of spelling errors. If ignored is true
-// Checker's list of ignored strings is also cleared.
-func (c *Checker) Clear(ignored bool) {
-	c.errors = nil
-	if ignored {
-		for i := range c.ignored {
-			delete(c.ignored, i)
-		}
-	}
 }
 
 // Ignore adds a word to ignored words.
@@ -65,73 +54,80 @@ func (c *Checker) SetIgnoreUppercase(ignore bool) {
 	c.ignoreUppercase = ignore
 }
 
-// CheckFile checks the file at given path for spelling errors using a
-// given dictionary, and populates Checker's errors list.
-func (c *Checker) CheckFile(root *loader.Node, path string) {
-	// Open file
+// CheckFile checks the file at given path for spelling errors against
+// a given Trie. Returns a list of incorrect words with their row and
+// column numbers, and an IO error if file reading fails.
+func (c *Checker) CheckFile(root *loader.Node, path string) ([]SpellingError, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
 
-	wordEnd := func(c rune) bool {
-		return unicode.IsPunct(c) || (c == ' ')
+	errorChan := make(chan SpellingError)
+	done := make(chan bool)
+
+	scanner := bufio.NewScanner(file)
+	line := 0
+	for scanner.Scan() {
+		go c.CheckLine(root, scanner.Text(), errorChan, done, line, func(c rune) bool {
+			return unicode.IsPunct(c) || (c == ' ')
+		})
+
+		line++
 	}
 
-	// Read words from file
-	lineNumber := 0
-
-	fileScanner := bufio.NewScanner(file)
-	for fileScanner.Scan() {
-		textLine := fileScanner.Text()
-
-		wg.Add(1)
-		go c.checkLine(root, textLine, lineNumber, wordEnd)
-
-		lineNumber++
+	// If an IO error occurred
+	if err := scanner.Err(); err != nil {
+		return nil, err
 	}
 
-	if err := fileScanner.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	wg.Wait()
-}
-
-// checkLine finds spelling errors in a line (string) of words.
-func (c *Checker) checkLine(root *loader.Node, textLine string, lineNumber int, wordEnd func(c rune) bool) {
-	defer wg.Done()
-
-	lineErrors := make([]string, 0)
-	words := strings.FieldsFunc(textLine, wordEnd)
-
-	hasErrors := false
-
-	for i, word := range words {
-		if !c.ignored[word] {
-			if c.ignoreUppercase {
-				word = strings.ToLower(word)
-			}
-
-			if !CheckWord(root, word) {
-				// Add formatted error to list
-				lineErrors = append(lineErrors, fmt.Sprintf("At (%d, %d)  \"%s\"", lineNumber, i, word))
-				hasErrors = true
-			}
+	go func() {
+		for count := 0; count < line; count++ {
+			<-done
 		}
+
+		close(errorChan)
+	}()
+
+	errors := make([]SpellingError, 0)
+	for word := range errorChan {
+		errors = append(errors, word)
 	}
 
-	// Add line's errors to errors slice
-	if hasErrors {
-		mux.Lock()
-		c.errors = append(c.errors, lineErrors...)
-		mux.Unlock()
-	}
+	return errors, nil
 }
 
-// CheckWord returns true if a word exists in the given trie,
-// false otherwise.
+// CheckLine takes a line of text (string containing multiple words), seperates the
+// line into words using wordEnd function, checks each word in the line against
+// the given trie, and pushes incorrect words to errorChan. After line evaluation is
+// finished, true is sent as a singal to done channel.
+func (c *Checker) CheckLine(root *loader.Node, line string, errorChan chan SpellingError, done chan bool, lineNumber int, wordEnd func(c rune) bool) {
+	wordDone := make(chan bool)
+	words := strings.FieldsFunc(line, wordEnd)
+	for i, word := range words {
+		if c.ignoreUppercase {
+			word = strings.ToLower(word)
+		}
+
+		go func(word string, index int) {
+			if !c.ignored[word] && !CheckWord(root, word) {
+				errorChan <- SpellingError{word, lineNumber, index}
+			}
+
+			wordDone <- true
+		}(word, i)
+	}
+
+	for count, length := 0, len(words); count < length; count++ {
+		<-wordDone
+	}
+
+	done <- true
+}
+
+// CheckWord verifies a given word against a given Trie, returns
+// true if word exists in the given trie, false otherwise.
 func CheckWord(root *loader.Node, word string) bool {
 	return recCheck(root, word, 0)
 }
@@ -167,14 +163,4 @@ func recCheck(root *loader.Node, word string, charNumber int) bool {
 	}
 
 	return false
-}
-
-// PrintSpellingErrors a list of spelling errors. Errors are formatted
-// as -- At (lineNumber, wordNumber)  "Error"
-func (c *Checker) PrintSpellingErrors() {
-	for _, spellingError := range c.errors {
-		fmt.Println(spellingError)
-	}
-
-	fmt.Printf("- Found a total of %d errors.\n", len(c.errors))
 }

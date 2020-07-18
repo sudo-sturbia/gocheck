@@ -68,39 +68,51 @@ var root = loader.LoadList([]string{
 
 // Test file checking on a file without errors.
 func TestCheckFileWithoutErrors(t *testing.T) {
-	testChecker := New()
-	testChecker.CheckFile(root, "../../test-data/paragraph.txt")
+	c := New()
+	found, err := c.CheckFile(root, "../../test-data/paragraph.txt")
+	if err != nil {
+		t.Errorf("File reading failed.")
+	}
 
-	if len(testChecker.errors) != 0 {
-		t.Errorf("Number of spelling errors incorrect, expected: 0, got: %d", len(testChecker.errors))
+	if len(found) != 0 {
+		t.Errorf("Found errors in a correct file.")
 	}
 }
 
 // Test file checking on a file with errors.
 func TestCheckFileWithErrors(t *testing.T) {
-	testChecker := New()
-	testChecker.CheckFile(root, "../../test-data/wrong-paragraph.txt")
+	c := New()
+	found, err := c.CheckFile(root, "../../test-data/wrong-paragraph.txt")
+	if err != nil {
+		t.Errorf("File reading failed.")
+	}
 
-	if len(testChecker.errors) != 8 {
-		t.Errorf("Number of spelling errors incorrect, expected: 8, got: %d", len(testChecker.errors))
+	if len(found) != 8 {
+		t.Errorf("Incorrect number of spelling errors. Expected 8, Found %d.", len(found))
 	}
 
 	// Assert errors found in file
-	// Create error map
-	errorMap := make(map[string]bool)
+	shouldFind := []SpellingError{
+		SpellingError{"memmorable", 0, 3},
+		SpellingError{"mde", 0, 9},
+		SpellingError{"s12eleted", 1, 2},
+		SpellingError{"stu", 1, 4},
+		SpellingError{"ck", 1, 5},
+		SpellingError{"th", 2, 11},
+		SpellingError{"nevsdfser", 3, 2},
+		SpellingError{"rmation", 3, 9},
+	}
 
-	errorMap["At (0, 3)  \"memmorable\""] = true
-	errorMap["At (0, 9)  \"mde\""] = true
-	errorMap["At (1, 2)  \"s12eleted\""] = true
-	errorMap["At (1, 4)  \"stu\""] = true
-	errorMap["At (1, 5)  \"ck\""] = true
-	errorMap["At (2, 11)  \"th\""] = true
-	errorMap["At (3, 2)  \"nevsdfser\""] = true
-	errorMap["At (3, 9)  \"rmation\""] = true
+	// Push found errors to a map
+	foundMap := make(map[string]SpellingError)
+	for _, err := range found {
+		foundMap[err.Word] = err
+	}
 
-	for i := 0; i < 8; i++ {
-		if !errorMap[testChecker.errors[i]] {
-			t.Errorf("Found incorrect error: %s", testChecker.errors[i])
+	// Compare found with shouldFind
+	for _, err := range shouldFind {
+		if foundMap[err.Word] != err {
+			t.Errorf("Didn't find %v.", err)
 		}
 	}
 }
@@ -170,8 +182,8 @@ func TestCheckWordDoesntExist(t *testing.T) {
 	}
 }
 
-// Benchmark processing time.
-func BenchmarkWordProcessing(b *testing.B) {
+// Benchmark CheckFile function.
+func BenchmarkCheckFile(b *testing.B) {
 	testChecker := New()
 	for n := 0; n < b.N; n++ {
 		testChecker.CheckFile(root, "../../test-data/paragraph.txt")
