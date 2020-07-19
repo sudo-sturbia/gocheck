@@ -149,6 +149,75 @@ func TestCheckListWithErrors(t *testing.T) {
 	}
 }
 
+// Test CheckList function with some options enabled.
+func TestCheckListWithOptions(t *testing.T) {
+	c := New()
+	words := []string{
+		"selected",
+		"struck",
+		"out",
+		"oF",
+		"aNd",
+		"tHINk",
+		"hoW",
+		"diFfeRent",
+		"ITS",
+		"cOurse",
+		"would",
+		"have",
+		"been",
+		"pause",
+		"you",
+		"who",
+		"read",
+		"this",
+		"moment",
+		"long",
+	}
+
+	shouldFind := []string{
+		"oF",
+		"aNd",
+		"tHINk",
+		"hoW",
+		"diFfeRent",
+		"ITS",
+		"cOurse",
+	}
+
+	found := c.CheckList(root, words)
+	if len(found) != len(shouldFind) {
+		t.Errorf("Expected %d errors, found %d.", len(shouldFind), len(found))
+	}
+
+	// Retry with IgnoreUppercase set to true
+	c.SetIgnoreUppercase(true)
+	found = c.CheckList(root, words)
+	if len(found) != 0 {
+		t.Errorf("Expected %d errors, found %d.", len(shouldFind), len(found))
+	}
+
+	// Retry with an ignored list
+	c.SetIgnoreUppercase(false)
+	c.IgnoreList([]string{
+		"oF",
+		"aNd",
+		"hoW",
+		"diFfeRent",
+		"ITS",
+		"cOurse",
+	})
+
+	found = c.CheckList(root, words)
+	if len(found) != 1 {
+		t.Errorf("Expected %d errors, found %d.", len(shouldFind), len(found))
+	}
+
+	if found[0] != "tHINk" {
+		t.Errorf("Didn't find %s.", "tHINk")
+	}
+}
+
 // Test file checking on a file without errors.
 func TestCheckFileWithoutErrors(t *testing.T) {
 	c := New()
