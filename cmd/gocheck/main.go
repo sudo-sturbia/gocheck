@@ -5,6 +5,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -30,12 +31,20 @@ func main() {
 
 	dictionary := loader.LoadFile(dictionaryPath)
 
-	spellChecker := checker.New()
-	spellChecker.IgnoreList(ignoredWords)
-	spellChecker.SetIgnoreUppercase(*upper)
+	c := checker.New()
+	c.IgnoreList(ignoredWords)
+	c.SetIgnoreUppercase(*upper)
 
-	spellChecker.CheckFile(dictionary, filePath)
-	spellChecker.PrintSpellingErrors()
+	errors, err := c.CheckFile(dictionary, filePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, word := range errors {
+		fmt.Printf("At (%d, %d) \"%s\"\n", word.Row, word.Col, word.Word)
+	}
+
+	fmt.Printf("- Found a total of %d errors.\n", len(errors))
 }
 
 // parse parses command line arguments and flags. Returns two paths,
