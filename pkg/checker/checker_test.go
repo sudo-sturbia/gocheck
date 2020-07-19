@@ -66,6 +66,89 @@ var root = loader.LoadList([]string{
 	"on",
 })
 
+// Test CheckList function on a list without errors
+func TestCheckListWithoutErrors(t *testing.T) {
+	c := New()
+	words := []string{
+		"read",
+		"this",
+		"moment",
+		"long",
+		"chain",
+		"iron",
+		"or",
+		"gold",
+		"thorns",
+		"flowers",
+		"that",
+		"never",
+		"bound",
+		"but",
+		"formation",
+		"first",
+		"link",
+		"on",
+	}
+
+	if len(c.CheckList(root, words)) != 0 {
+		t.Errorf("Found error in a list without errors.")
+	}
+}
+
+// Test CheckList function on a list containing errors
+func TestCheckListWithErrors(t *testing.T) {
+	c := New()
+	words := []string{
+		"read",
+		"ths",
+		"moment",
+		"long",
+		"chi",
+		"ion",
+		"o",
+		"gd",
+		"thorns",
+		"_-",
+		"th",
+		"never",
+		"bound",
+		"but",
+		"formation",
+		"first",
+		"lik",
+		"on",
+	}
+
+	shouldFind := []string{
+		"ths",
+		"chi",
+		"ion",
+		"o",
+		"gd",
+		"_-",
+		"th",
+		"lik",
+	}
+
+	found := c.CheckList(root, words)
+	if len(found) != len(shouldFind) {
+		t.Errorf("Expected %d errors, found %d.", len(shouldFind), len(found))
+	}
+
+	// Push found errors into a map
+	foundMap := make(map[string]bool)
+	for _, word := range found {
+		foundMap[word] = true
+	}
+
+	// Compare found with shouldFind
+	for _, word := range shouldFind {
+		if !foundMap[word] {
+			t.Errorf("Didn't find %s.", word)
+		}
+	}
+}
+
 // Test file checking on a file without errors.
 func TestCheckFileWithoutErrors(t *testing.T) {
 	c := New()
@@ -182,10 +265,78 @@ func TestCheckWordDoesntExist(t *testing.T) {
 	}
 }
 
+// Benchmark CheckList function.
+func BenchmarkCheckList(b *testing.B) {
+	c := New()
+	words := []string{
+		"that",
+		"was",
+		"a",
+		"memorable",
+		"day",
+		"to",
+		"me",
+		"for",
+		"it",
+		"made",
+		"great",
+		"changes",
+		"in",
+		"but",
+		"is",
+		"the",
+		"same",
+		"with",
+		"any",
+		"life",
+		"imagine",
+		"one",
+		"selected",
+		"struck",
+		"out",
+		"of",
+		"and",
+		"think",
+		"how",
+		"different",
+		"its",
+		"course",
+		"would",
+		"have",
+		"been",
+		"pause",
+		"you",
+		"who",
+		"read",
+		"this",
+		"moment",
+		"long",
+		"chain",
+		"iron",
+		"or",
+		"gold",
+		"thorns",
+		"flowers",
+		"that",
+		"never",
+		"bound",
+		"but",
+		"formation",
+		"first",
+		"link",
+		"on",
+	}
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		c.CheckList(root, words)
+	}
+}
+
 // Benchmark CheckFile function.
 func BenchmarkCheckFile(b *testing.B) {
-	testChecker := New()
+	c := New()
 	for n := 0; n < b.N; n++ {
-		testChecker.CheckFile(root, "../../test-data/paragraph.txt")
+		c.CheckFile(root, "../../test-data/paragraph.txt")
 	}
 }

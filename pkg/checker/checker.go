@@ -1,5 +1,4 @@
-// Package checker implements a simple spell-checker used to find
-// spelling errors.
+// Package checker implements a simple, fast spell-checker.
 package checker
 
 import (
@@ -29,10 +28,7 @@ type SpellingError struct {
 
 // New returns pointer to a new, initialized Checker object.
 func New() *Checker {
-	instance := new(Checker)
-	instance.ignored = make(map[string]bool)
-
-	return instance
+	return &Checker{make(map[string]bool), false}
 }
 
 // Ignore adds a word to ignored words.
@@ -61,6 +57,41 @@ func (c *Checker) ClearIgnored(ignored bool) {
 // wrong. When ignoreUppercase is true, this behaviour is disabled.
 func (c *Checker) SetIgnoreUppercase(ignore bool) {
 	c.ignoreUppercase = ignore
+}
+
+// CheckList checks a list of strings against a given Trie and returns
+// a slice containing incorrect words.
+func (c *Checker) CheckList(root *loader.Node, list []string) []string {
+	counter := make(chan bool) // To count checked words.
+	errorChan := make(chan string)
+	for _, word := range list {
+		if c.ignoreUppercase {
+			word = strings.ToLower(word)
+		}
+
+		go func(word string) {
+			if !c.ignored[word] && !CheckWord(root, word) {
+				errorChan <- word
+			}
+
+			counter <- true
+		}(word)
+	}
+
+	go func() {
+		for count := 0; count < len(list); count++ {
+			<-counter
+		}
+
+		close(errorChan)
+	}()
+
+	errors := make([]string, 0)
+	for word := range errorChan {
+		errors = append(errors, word)
+	}
+
+	return errors
 }
 
 // CheckFile checks the file at given path for spelling errors against
