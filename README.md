@@ -9,7 +9,38 @@ go get github.com/sudo-sturbia/gocheck/cmd/gocheck
 ```
 
 ## How To Use
+### Package
+For package documentation see [checker](https://pkg.go.dev/github.com/sudo-sturbia/gocheck/pkg/checker),
+and [loader](https://pkg.go.dev/github.com/sudo-sturbia/gocheck/pkg/loader).
 
+```go
+// Usage Example
+// Load a Trie to use as a dictionary
+dictionary := loader.LoadList([]string{
+	"list",
+	"of",
+	"words",
+	"to",
+	"verify",
+	"against",
+})
+
+// Set of words to verify
+words := []string{
+	"wrds",
+	"against",
+}
+
+c := checker.New()
+errors := c.CheckList(dictionary, words)
+for _, word := range errors {
+	fmt.Println(word)
+}
+
+// Output: wrds
+```
+
+### Command Line Tool
 ```console
 gocheck is a simple, fast spell-checker.
 It works by comparing a file against a given list of words and prints
@@ -34,7 +65,7 @@ Options
 For the source code see [github.com/sudo-sturbia/gocheck]
 ```
 
-### Example
+#### Example
 Using files in test-data/ directory
 
 ```
@@ -56,19 +87,3 @@ At (0, 9)  "mde"
 ```
 
 A comprehensive dictionary can be downloaded from [english-words](https://github.com/dwyl/english-words).
-
-## How It Works
-gocheck compares a given text file against another containing a list of
-words. Incorrect words are collected, and an error message formatted as
-```
-At (%LineNumber, %WordNumber) "incorrectWord"
-.
-.
-- Found a total of N errors.
-```
-is printed.
-
-gocheck optimizes perfomance by using
-
-- Trie data structure for dictionary loading/querying,
-- Goroutines to process input files.
