@@ -1,4 +1,22 @@
 // Package checker implements a simple, fast spell-checker.
+//
+// checker contatins functions to verify single words, lists, text
+// lines, and text files. It works by verifying words against a given
+// Trie, and returning spelling errors (and their position in case of
+// text files.)
+//
+// To check single words a Checker is not needed, you can simply use
+// the following
+//		if !checker.CheckWord(root, "Word") {
+//			// Do something ..
+// 		}
+//
+// To verify lists, lines, and text files, you need a Checker.
+//		c := checker.New()
+//		fileErrors, err := c.CheckFile(root, "path/to/file")
+//
+// Checkers provide several helpful options such as ignoring a certain
+// set of words when spell-checking, and detection of uppercase errors.
 package checker
 
 import (
@@ -13,7 +31,7 @@ import (
 
 // Checker is used to find spelling errors. Checker implements
 // several options when spell-checking such as ignored words, and
-// words with uppercase letters.
+// detection of incorrect usage of uppercase letters.
 type Checker struct {
 	ignored         map[string]bool // Map of words to ignore
 	ignoreUppercase bool            // Consider all given words to be lowercase

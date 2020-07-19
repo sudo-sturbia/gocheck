@@ -1,10 +1,38 @@
 package checker
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/sudo-sturbia/gocheck/pkg/loader"
 )
+
+// Example is a usage example for checker package.
+func Example() {
+	// Load a Trie to use as a dictionary
+	dictionary := loader.LoadList([]string{
+		"list",
+		"of",
+		"words",
+		"to",
+		"verify",
+		"against",
+	})
+
+	// Set of words to verify
+	words := []string{
+		"wrds",
+		"against",
+	}
+
+	c := New()
+	errors := c.CheckList(dictionary, words)
+	for _, word := range errors {
+		fmt.Println(word)
+	}
+
+	// Output: wrds
+}
 
 // Root of used trie.
 var root = loader.LoadList([]string{
