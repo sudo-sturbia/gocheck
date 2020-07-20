@@ -437,3 +437,11 @@ func BenchmarkCheckFile(b *testing.B) {
 		c.CheckFile(root, "../../test-data/paragraph.txt")
 	}
 }
+
+// Benchmark CheckFile on a file containing only one line.
+func BenchmarkCheckFileOneLine(b *testing.B) {
+	c := New()
+	for n := 0; n < b.N; n++ {
+		c.CheckFile(root, "../../test-data/line.txt")
+	}
+}
