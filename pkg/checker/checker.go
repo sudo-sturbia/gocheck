@@ -80,33 +80,15 @@ func (c *Checker) SetIgnoreUppercase(ignore bool) {
 // CheckList checks a list of strings against a given Trie and returns
 // a slice containing incorrect words.
 func (c *Checker) CheckList(root *loader.Node, list []string) []string {
-	counter := make(chan bool) // To count checked words.
-	errorChan := make(chan string)
+	errors := make([]string, 0)
 	for _, word := range list {
 		if c.ignoreUppercase {
 			word = strings.ToLower(word)
 		}
 
-		go func(word string) {
-			if !c.ignored[word] && !CheckWord(root, word) {
-				errorChan <- word
-			}
-
-			counter <- true
-		}(word)
-	}
-
-	go func() {
-		for count := 0; count < len(list); count++ {
-			<-counter
+		if !c.ignored[word] && !CheckWord(root, word) {
+			errors = append(errors, word)
 		}
-
-		close(errorChan)
-	}()
-
-	errors := make([]string, 0)
-	for word := range errorChan {
-		errors = append(errors, word)
 	}
 
 	return errors
@@ -161,24 +143,15 @@ func (c *Checker) CheckFile(root *loader.Node, path string) ([]SpellingError, er
 // the given trie, and pushes incorrect words to errorChan. After line evaluation is
 // finished, true is sent as a singal to done channel.
 func (c *Checker) CheckLine(root *loader.Node, line string, errorChan chan SpellingError, done chan bool, lineNumber int, wordEnd func(c rune) bool) {
-	wordDone := make(chan bool)
 	words := strings.FieldsFunc(line, wordEnd)
 	for i, word := range words {
 		if c.ignoreUppercase {
 			word = strings.ToLower(word)
 		}
 
-		go func(word string, index int) {
-			if !c.ignored[word] && !CheckWord(root, word) {
-				errorChan <- SpellingError{word, lineNumber, index}
-			}
-
-			wordDone <- true
-		}(word, i)
-	}
-
-	for count, length := 0, len(words); count < length; count++ {
-		<-wordDone
+		if !c.ignored[word] && !CheckWord(root, word) {
+			errorChan <- SpellingError{word, lineNumber, i}
+		}
 	}
 
 	done <- true
