@@ -5,12 +5,12 @@
 ## How To Install
 
 ```
-go get github.com/sudo-sturbia/gocheck/v3/cmd/gocheck
+GO111MODULE=on go get github.com/sudo-sturbia/gocheck/v3/cmd/gocheck
 ```
 
 ## How To Use
 ### Package
-For package documentation see [pkg.go.dev](https://pkg.go.dev/github.com/sudo-sturbia/gocheck/v3).
+For package documentation see [pkg.go.dev](https://pkg.go.dev/mod/github.com/sudo-sturbia/gocheck/v3).
 
 ```go
 package example
