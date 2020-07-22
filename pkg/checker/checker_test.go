@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sudo-sturbia/gocheck/pkg/loader"
+	"github.com/sudo-sturbia/gocheck/v3/pkg/loader"
 )
 
 // Example is a usage example for checker package.

@@ -9,8 +9,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sudo-sturbia/gocheck/pkg/checker"
-	"github.com/sudo-sturbia/gocheck/pkg/loader"
+	"github.com/sudo-sturbia/gocheck/v3/pkg/checker"
+	"github.com/sudo-sturbia/gocheck/v3/pkg/loader"
 )
 
 // ignored is a list of words to ignore while spell-checking. -ignore

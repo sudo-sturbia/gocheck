@@ -26,7 +26,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/sudo-sturbia/gocheck/pkg/loader"
+	"github.com/sudo-sturbia/gocheck/v3/pkg/loader"
 )
 
 // Checker is used to find spelling errors. Checker implements

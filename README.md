@@ -5,39 +5,49 @@
 ## How To Install
 
 ```
-go get github.com/sudo-sturbia/gocheck/cmd/gocheck
+go get github.com/sudo-sturbia/gocheck/v3/cmd/gocheck
 ```
 
 ## How To Use
 ### Package
-For package documentation see [checker](https://pkg.go.dev/github.com/sudo-sturbia/gocheck/pkg/checker),
-and [loader](https://pkg.go.dev/github.com/sudo-sturbia/gocheck/pkg/loader).
+For package documentation see [pkg.go.dev](https://pkg.go.dev/github.com/sudo-sturbia/gocheck/v3).
 
 ```go
-// Usage Example
-// Load a Trie to use as a dictionary
-dictionary := loader.LoadList([]string{
-	"list",
-	"of",
-	"words",
-	"to",
-	"verify",
-	"against",
-})
+package example
 
-// Set of words to verify
-words := []string{
-	"wrds",
-	"against",
+import (
+	"fmt"
+
+	"github.com/sudo-sturbia/gocheck/v3/pkg/checker"
+	"github.com/sudo-sturbia/gocheck/v3/pkg/loader"
+)
+
+func main() {
+	// Usage Example
+	// Load a Trie to use as a dictionary
+	dictionary := loader.LoadList([]string{
+		"list",
+		"of",
+		"words",
+		"to",
+		"verify",
+		"against",
+	})
+
+	// Set of words to verify
+	words := []string{
+		"wrds",
+		"against",
+	}
+
+	c := checker.New()
+	errors := c.CheckList(dictionary, words)
+	for _, word := range errors {
+		fmt.Println(word)
+	}
+
+	// Output: wrds
 }
-
-c := checker.New()
-errors := c.CheckList(dictionary, words)
-for _, word := range errors {
-	fmt.Println(word)
-}
-
-// Output: wrds
 ```
 
 ### Command Line Tool
